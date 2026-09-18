@@ -27,6 +27,8 @@ export interface StudentUser {
   hobbies: string[];
   motto?: string;
   mastered: boolean; // For Terraquiz KPI
+  is_officer?: boolean; // NEW: Penanda akun BPH / Pengurus Angkatan
+  password?: string; // NEW: Password sementara / diubah user
   emergency_contact?: {
     relation: string;
     phone: string;

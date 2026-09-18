@@ -3,12 +3,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   Heart,
   MessageCircle,
-  Share2,
   Image as ImageIcon,
   Send,
-  Sparkles,
-  Tag,
-  Check,
   X,
 } from 'lucide-react';
 import { Post, StudentUser, PostComment } from '../types';
@@ -22,8 +18,6 @@ interface TweeterraViewProps {
   onSelectStudent: (studentName: string) => void;
 }
 
-const CATEGORIES = ['Semua', 'Kaderisasi', 'Pengumuman', 'Akademik', 'Keseruan', 'Curhat'] as const;
-
 export const TweeterraView: React.FC<TweeterraViewProps> = ({
   currentUser,
   posts,
@@ -32,19 +26,11 @@ export const TweeterraView: React.FC<TweeterraViewProps> = ({
   onAddComment,
   onSelectStudent,
 }) => {
-  const [activeFilter, setActiveFilter] = useState<string>('Semua');
   const [content, setContent] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<Post['category']>('Keseruan');
   const [imageUrl, setImageUrl] = useState('');
   const [showImageInput, setShowImageInput] = useState(false);
   const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
   const [commentInputs, setCommentInputs] = useState<{ [postId: string]: string }>({});
-  const [copiedPostId, setCopiedPostId] = useState<string | null>(null);
-
-  const filteredPosts = posts.filter((p) => {
-    if (activeFilter === 'Semua') return true;
-    return p.category === activeFilter;
-  });
 
   const handleCreatePost = (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,7 +49,7 @@ export const TweeterraView: React.FC<TweeterraViewProps> = ({
       likes_count: 0,
       is_liked: false,
       comments: [],
-      category: selectedCategory,
+      category: 'Keseruan', // Default internal value untuk tipe data
     };
 
     onAddPost(newPost);
@@ -88,31 +74,16 @@ export const TweeterraView: React.FC<TweeterraViewProps> = ({
     setCommentInputs((prev) => ({ ...prev, [postId]: '' }));
   };
 
-  const handleShare = (postId: string, postContent: string) => {
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(`"${postContent}" — dibagikan dari Tweeterra (myTerravana)`);
-      setCopiedPostId(postId);
-      setTimeout(() => setCopiedPostId(null), 2000);
-    }
-  };
-
   return (
     <div id="tweeterra-view-root" className="max-w-2xl mx-auto space-y-5 pb-28">
-      {/* 1. VIEW HEADER */}
-      <div className="flex items-center justify-between pt-2">
-        <div>
-          <h2 className="text-2xl font-extrabold tracking-tight text-slate-900">
-            Tweeterra
-          </h2>
-          <p className="text-xs text-slate-500">
-            Kanal aspirasi, obrolan, dan informasi santai 170 mahasiswa Terravana
-          </p>
-        </div>
-
-        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100/80 text-xs font-semibold text-slate-700">
-          <Sparkles size={13} className="text-amber-500" />
-          <span>Cohort Feed</span>
-        </div>
+      {/* 1. VIEW HEADER (BERSIH TANPA COHORT FEED CARD) */}
+      <div className="pt-2">
+        <h2 className="text-2xl font-extrabold tracking-tight text-slate-900">
+          Tweeterra
+        </h2>
+        <p className="text-xs text-slate-500 mt-0.5">
+          Kanal cerita dan obrolan santai 170 mahasiswa Terravana
+        </p>
       </div>
 
       {/* 2. POST CREATOR CARD */}
@@ -131,13 +102,13 @@ export const TweeterraView: React.FC<TweeterraViewProps> = ({
               <textarea
                 id="input-post-content"
                 rows={3}
-                placeholder="Apa kabar hari ini, Terravana? Bagikan info tugas, tebengan, atau semangat kaderisasi..."
+                placeholder="Apa cerita kamu hari ini, Terravana?"
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 className="w-full text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none resize-none bg-transparent"
               />
 
-              {/* Optional image preview */}
+              {/* Preview foto */}
               {imageUrl && (
                 <div className="relative mt-2 rounded-xl overflow-hidden border border-slate-200">
                   <img
@@ -155,7 +126,7 @@ export const TweeterraView: React.FC<TweeterraViewProps> = ({
                 </div>
               )}
 
-              {/* Image Input field if toggled */}
+              {/* Input URL foto opsional */}
               {showImageInput && !imageUrl && (
                 <div className="mt-2 flex items-center gap-2">
                   <input
@@ -165,17 +136,6 @@ export const TweeterraView: React.FC<TweeterraViewProps> = ({
                     onChange={(e) => setImageUrl(e.target.value)}
                     className="flex-1 text-xs px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 focus:outline-none focus:ring-1 focus:ring-slate-900"
                   />
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setImageUrl(
-                        'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800&auto=format&fit=crop&q=80'
-                      )
-                    }
-                    className="text-[10px] font-bold px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 whitespace-nowrap"
-                  >
-                    Contoh Foto
-                  </button>
                   <button
                     type="button"
                     onClick={() => setShowImageInput(false)}
@@ -188,36 +148,17 @@ export const TweeterraView: React.FC<TweeterraViewProps> = ({
             </div>
           </div>
 
-          <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
-            {/* Category selection */}
-            <div className="flex items-center gap-1.5">
-              <span className="text-[11px] font-semibold text-slate-400 hidden xs:inline">
-                Topik:
-              </span>
-              <select
-                id="select-post-category"
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value as Post['category'])}
-                className="text-xs font-semibold px-2 py-1 rounded-lg bg-slate-50 border border-slate-200 text-slate-700 focus:outline-none"
-              >
-                <option value="Keseruan">🎉 Keseruan</option>
-                <option value="Kaderisasi">✊ Kaderisasi</option>
-                <option value="Pengumuman">📢 Pengumuman</option>
-                <option value="Akademik">📚 Akademik</option>
-                <option value="Curhat">☕ Curhat</option>
-              </select>
+          <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+            <button
+              type="button"
+              onClick={() => setShowImageInput(!showImageInput)}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors"
+            >
+              <ImageIcon size={16} />
+              <span>Tambah Foto</span>
+            </button>
 
-              <button
-                type="button"
-                onClick={() => setShowImageInput(!showImageInput)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-colors"
-                title="Sisipkan tautan foto"
-              >
-                <ImageIcon size={16} />
-              </button>
-            </div>
-
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <span className="text-[11px] text-slate-400 font-medium">
                 {content.length}/280
               </span>
@@ -239,43 +180,19 @@ export const TweeterraView: React.FC<TweeterraViewProps> = ({
         </form>
       </div>
 
-      {/* 3. CATEGORY FILTER CHIPS */}
-      <div
-        id="tweeterra-filter-chips"
-        className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar"
-      >
-        {CATEGORIES.map((cat) => {
-          const isActive = activeFilter === cat;
-          return (
-            <button
-              key={cat}
-              type="button"
-              onClick={() => setActiveFilter(cat)}
-              className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
-                isActive
-                  ? 'bg-slate-900 text-white shadow-xs'
-                  : 'bg-white text-slate-600 hover:bg-slate-100/80 border border-slate-200/70'
-              }`}
-            >
-              {cat}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* 4. FEED CARDS (TWITTER / X MINIMALIST STYLE) */}
+      {/* 3. FEED CARDS (TWITTER/X MINIMALIST CLEAN) */}
       <div id="tweeterra-posts-list" className="space-y-4">
-        {filteredPosts.length === 0 ? (
+        {posts.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-2xl border border-black/[0.05] p-6">
             <p className="text-sm font-semibold text-slate-700">
-              Belum ada postingan di kategori {activeFilter}
+              Belum ada postingan cerita.
             </p>
             <p className="text-xs text-slate-400 mt-1">
-              Jadilah yang pertama berbagi kabar dengan rekan seangkatan!
+              Tulis postingan pertama untuk menyapa teman seangkatan!
             </p>
           </div>
         ) : (
-          filteredPosts.map((post) => {
+          posts.map((post) => {
             const isCommentsOpen = activeCommentPostId === post.id;
 
             return (
@@ -293,7 +210,7 @@ export const TweeterraView: React.FC<TweeterraViewProps> = ({
                   />
 
                   <div className="flex-1 min-w-0">
-                    {/* Author Meta Row */}
+                    {/* Author Meta Row (TANPA BADGE K-1/K-2 DLL) */}
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span
@@ -305,47 +222,38 @@ export const TweeterraView: React.FC<TweeterraViewProps> = ({
                         <span className="text-[11px] text-slate-400 font-medium">
                           @{post.author_nickname}
                         </span>
-                        <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-slate-100 text-slate-600">
-                          K-{post.author_kelompok}
-                        </span>
                         <span className="text-slate-300">•</span>
                         <span className="text-[11px] text-slate-400">
                           {post.created_at}
                         </span>
                       </div>
-
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-50 border border-slate-100 text-slate-500 shrink-0">
-                        {post.category}
-                      </span>
                     </div>
 
-                    {/* Post Content */}
+                    {/* Content */}
                     <p className="mt-2 text-xs sm:text-sm text-slate-800 leading-relaxed whitespace-pre-line font-normal">
                       {post.content}
                     </p>
 
-                    {/* Optional Post Image */}
+                    {/* Optional Image */}
                     {post.image_url && (
                       <div className="mt-3 rounded-xl overflow-hidden border border-slate-200/80">
                         <img
                           src={post.image_url}
                           alt="Post media"
-                          className="w-full max-h-80 object-cover hover:scale-[1.01] transition-transform duration-300"
+                          className="w-full max-h-80 object-cover"
                         />
                       </div>
                     )}
 
-                    {/* Post Actions: Like, Comment, Share */}
-                    <div className="mt-3.5 pt-2.5 border-t border-slate-100 flex items-center justify-between text-slate-500 text-xs">
-                      {/* Like Button */}
+                    {/* Actions: Hanya Like & Balasan (TANPA TOMBOL SHARE) */}
+                    <div className="mt-3.5 pt-2.5 border-t border-slate-100 flex items-center gap-6 text-slate-500 text-xs">
                       <button
-                        id={`btn-like-post-${post.id}`}
                         type="button"
                         onClick={() => onToggleLike(post.id)}
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-colors ${
+                        className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg transition-colors ${
                           post.is_liked
-                            ? 'text-rose-600 bg-rose-50 font-bold'
-                            : 'hover:text-rose-600 hover:bg-slate-50'
+                            ? 'text-rose-600 font-bold'
+                            : 'hover:text-rose-600'
                         }`}
                       >
                         <Heart
@@ -355,47 +263,23 @@ export const TweeterraView: React.FC<TweeterraViewProps> = ({
                         <span>{post.likes_count}</span>
                       </button>
 
-                      {/* Comment Toggle Button */}
                       <button
-                        id={`btn-comment-toggle-${post.id}`}
                         type="button"
                         onClick={() =>
                           setActiveCommentPostId(isCommentsOpen ? null : post.id)
                         }
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-colors ${
+                        className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg transition-colors ${
                           isCommentsOpen
-                            ? 'text-slate-900 bg-slate-100 font-bold'
-                            : 'hover:text-slate-900 hover:bg-slate-50'
+                            ? 'text-slate-900 font-bold'
+                            : 'hover:text-slate-900'
                         }`}
                       >
                         <MessageCircle size={15} />
                         <span>{post.comments.length} Balasan</span>
                       </button>
-
-                      {/* Share Button */}
-                      <button
-                        type="button"
-                        onClick={() => handleShare(post.id, post.content)}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg hover:text-slate-900 hover:bg-slate-50 transition-colors"
-                        title="Bagikan Post"
-                      >
-                        {copiedPostId === post.id ? (
-                          <>
-                            <Check size={14} className="text-emerald-600" />
-                            <span className="text-emerald-600 font-semibold text-[11px]">
-                              Tersalin!
-                            </span>
-                          </>
-                        ) : (
-                          <>
-                            <Share2 size={14} />
-                            <span className="hidden xs:inline text-[11px]">Bagikan</span>
-                          </>
-                        )}
-                      </button>
                     </div>
 
-                    {/* Expandable Comments Drawer */}
+                    {/* Expandable Comments */}
                     <AnimatePresence>
                       {isCommentsOpen && (
                         <motion.div
@@ -404,14 +288,10 @@ export const TweeterraView: React.FC<TweeterraViewProps> = ({
                           exit={{ opacity: 0, height: 0 }}
                           className="mt-3 pt-3 border-t border-slate-100 space-y-3 overflow-hidden"
                         >
-                          {/* List of comments */}
                           {post.comments.length > 0 ? (
                             <div className="space-y-2.5 pl-2 border-l-2 border-slate-100">
                               {post.comments.map((comm) => (
-                                <div
-                                  key={comm.id}
-                                  className="flex items-start gap-2 text-xs"
-                                >
+                                <div key={comm.id} className="flex items-start gap-2 text-xs">
                                   <img
                                     src={comm.author_avatar}
                                     alt={comm.author_name}
@@ -439,11 +319,10 @@ export const TweeterraView: React.FC<TweeterraViewProps> = ({
                             </p>
                           )}
 
-                          {/* Quick reply input */}
                           <div className="flex items-center gap-2 pt-1">
                             <input
                               type="text"
-                              placeholder="Tulis balasan untuk teman seangkatan..."
+                              placeholder="Tulis balasan..."
                               value={commentInputs[post.id] || ''}
                               onChange={(e) =>
                                 setCommentInputs((prev) => ({
