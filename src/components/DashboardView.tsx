@@ -5,8 +5,6 @@ import {
   Plus,
   CheckCircle2,
   Circle,
-  Award,
-  ChevronRight,
   Trophy,
   AlertTriangle,
   Users,
@@ -15,8 +13,7 @@ import {
   X,
   ShieldCheck,
   Sun,
-  Flame,
-  ArrowRight,
+  ChevronRight,
 } from 'lucide-react';
 import {
   StudentUser,
@@ -100,13 +97,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   return (
     <div id="dashboard-view-root" className="space-y-6 pt-2 pb-36 font-sans">
-      {/* 1. HEADER ATAS: LOGO ANGKATAN DI KIRI & AVATAR USER DI KANAN */}
+      {/* 1. TOP BAR: LOGO ANGKATAN TRANSPARAN & AVATAR PROFIL */}
       <div className="flex items-center justify-between">
-        <div className="w-10 h-10 rounded-2xl bg-slate-900 p-1.5 shadow-sm">
+        <div className="w-10 h-10 shrink-0">
           <img
             src="/logoterravana.png"
             alt="Terravana Phoenix Logo"
-            className="w-full h-full object-contain"
+            className="w-full h-full object-contain drop-shadow-xs"
           />
         </div>
 
@@ -127,7 +124,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </button>
       </div>
 
-      {/* TANGGAL & SUBTITLE OVERVIEW */}
+      {/* 2. TANGGAL & GREETING USER */}
       <div className="space-y-1">
         <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-400">
           <Sun size={13} className="text-amber-500" />
@@ -144,21 +141,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               }
             }}
             className="text-3xl font-black tracking-tight text-slate-900 cursor-pointer hover:text-indigo-600 transition-colors"
+            title={currentUser.is_officer ? 'Mode BPH Aktif (Klik untuk matikan)' : 'Klik untuk masuk mode BPH'}
           >
-            Overview
+            Halo, {currentUser.nickname} 👋
           </h1>
 
-          <button
-            type="button"
-            onClick={() => setIsDetailAnnouncementOpen(true)}
-            className="px-3.5 py-1.5 rounded-full text-xs font-bold border border-indigo-200 text-indigo-600 hover:bg-indigo-50 transition-colors flex items-center gap-1"
-          >
-            <span>Detail BPH</span>
-          </button>
+          {currentUser.is_officer && (
+            <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-slate-900 text-white shadow-xs">
+              BPH / OFFICER
+            </span>
+          )}
         </div>
       </div>
 
-      {/* 2. HEALTH SCORE STYLE CARD (PERSISI VISILY CARD 1) */}
+      {/* 3. TERRAQUIZ KPI SCORE CARD (STYLE VISILY 100%) */}
       <section className="relative overflow-hidden bg-[#F2F3FF] rounded-3xl p-6 border border-indigo-100/60 shadow-xs flex items-start justify-between gap-4">
         <div className="space-y-2 max-w-[240px]">
           <h2 className="text-base font-extrabold text-slate-900 tracking-tight">
@@ -177,13 +173,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </button>
         </div>
 
-        {/* BADGE SKOR PINK/MERAH ALA VISILY */}
         <div className="w-16 h-20 bg-rose-400 text-white rounded-2xl rounded-b-3xl flex flex-col items-center justify-center shadow-md shrink-0 font-black text-2xl">
           {kpiPercentage}
         </div>
       </section>
 
-      {/* 3. HIGHLIGHTS GRID 2x2 (WARNA-WARNI SOLID ALA VISILY) */}
+      {/* 4. HIGHLIGHTS GRID 2x2 (PRESET WARNA VISILY) */}
       <section className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-black text-slate-900">Highlights</h2>
@@ -198,10 +193,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         <div className="grid grid-cols-2 gap-3.5">
-          {/* CARD 1: PENGUMUMAN URGENT (UNGU/INDIGO) */}
+          {/* CARD 1: PENGUMUMAN URGENT */}
           <div
             onClick={() => setIsDetailAnnouncementOpen(true)}
-            className="bg-[#7A82FC] text-white rounded-3xl p-4 flex flex-col justify-between min-h-[140px] shadow-sm cursor-pointer hover:opacity-95 transition-opacity"
+            className="bg-[#7A82FC] text-white rounded-3xl p-4 flex flex-col justify-between min-h-[140px] shadow-sm cursor-pointer hover:opacity-95 transition-opacity relative group"
           >
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-extrabold uppercase tracking-wider text-indigo-100">
@@ -210,7 +205,22 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <AlertTriangle size={24} className="text-white/80" />
             </div>
             <div>
-              <span className="text-[10px] font-bold text-indigo-200 block">Urgent Forum</span>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold text-indigo-200 block">Urgent Forum</span>
+                {currentUser.is_officer && onEditAnnouncement && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEditAnnouncement();
+                    }}
+                    className="p-1 rounded bg-white/20 hover:bg-white/30 text-white transition-colors"
+                    title="Edit Pengumuman"
+                  >
+                    <Edit3 size={11} />
+                  </button>
+                )}
+              </div>
               <h3 className="text-sm font-black text-white leading-tight mt-0.5 line-clamp-2">
                 {announcement.title}
               </h3>
@@ -220,7 +230,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
           </div>
 
-          {/* CARD 2: AGENDA TERDEKAT (ORANGE/SAGE) */}
+          {/* CARD 2: AGENDA UTAMA */}
           <div
             onClick={() => onNavigateTab('terrafinder')}
             className="bg-[#FFAA7A] text-white rounded-3xl p-4 flex flex-col justify-between min-h-[140px] shadow-sm cursor-pointer hover:opacity-95 transition-opacity"
@@ -232,9 +242,24 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <Calendar size={24} className="text-white/80" />
             </div>
             <div>
-              <span className="text-[10px] font-bold text-orange-100 block">
-                {agendas[0]?.date || 'Mendatang'}
-              </span>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold text-orange-100 block">
+                  {agendas[0]?.date || 'Mendatang'}
+                </span>
+                {currentUser.is_officer && onEditAgenda && agendas[0] && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEditAgenda(agendas[0]);
+                    }}
+                    className="p-1 rounded bg-white/20 hover:bg-white/30 text-white transition-colors"
+                    title="Edit Agenda"
+                  >
+                    <Edit3 size={11} />
+                  </button>
+                )}
+              </div>
               <h3 className="text-sm font-black text-white leading-tight mt-0.5 line-clamp-2">
                 {agendas[0]?.title || 'Tidak ada agenda'}
               </h3>
@@ -244,7 +269,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
           </div>
 
-          {/* CARD 3: TOP HAFALAN (TEAL/CYAN) */}
+          {/* CARD 3: TOP HAFALAN */}
           <div
             onClick={() => onNavigateTab('terraquiz')}
             className="bg-[#007EA7] text-white rounded-3xl p-4 flex flex-col justify-between min-h-[140px] shadow-sm cursor-pointer hover:opacity-95 transition-opacity"
@@ -266,7 +291,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
           </div>
 
-          {/* CARD 4: DIREKTORI MAHASISWA (PURPLE) */}
+          {/* CARD 4: DIREKTORI MAHASISWA */}
           <div
             onClick={() => onNavigateTab('terrafinder')}
             className="bg-[#5C428E] text-white rounded-3xl p-4 flex flex-col justify-between min-h-[140px] shadow-sm cursor-pointer hover:opacity-95 transition-opacity"
@@ -290,7 +315,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
       </section>
 
-      {/* MODAL DETAIL PENGUMUMAN FULL */}
+      {/* MODAL DETAIL PENGUMUMAN */}
       {isDetailAnnouncementOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="relative w-full max-w-md bg-white rounded-3xl border border-black/[0.08] shadow-2xl p-6 space-y-4">
