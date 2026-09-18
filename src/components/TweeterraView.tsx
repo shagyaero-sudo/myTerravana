@@ -3,14 +3,11 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   Heart,
   MessageCircle,
-  Send,
   X,
   MoreHorizontal,
   Trash2,
   Edit2,
   Flag,
-  BarChart2,
-  Sparkles,
   Lock,
   Plus,
 } from 'lucide-react';
@@ -47,21 +44,6 @@ export const TweeterraView: React.FC<TweeterraViewProps> = ({
   const [activeMenuPostId, setActiveMenuPostId] = useState<string | null>(null);
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
-
-  // Mock State untuk Daily Polls
-  const [pollVotes, setPollVotes] = useState<{ [key: number]: number }>({ 0: 42, 1: 28, 2: 15 });
-  const [hasVoted, setHasVoted] = useState(false);
-  const [selectedPollOption, setSelectedPollOption] = useState<number | null>(null);
-
-  const pollOptions = ['Tim Keputih (Kuliner)', 'Tim Gebang (Praktis)', 'Laju / Lulusan Rumah'];
-  const totalPollVotes = Object.values(pollVotes).reduce((a, b) => a + b, 0);
-
-  const handleVote = (index: number) => {
-    if (hasVoted) return;
-    setPollVotes((prev) => ({ ...prev, [index]: prev[index] + 1 }));
-    setHasVoted(true);
-    setSelectedPollOption(index);
-  };
 
   const handleCreatePost = (e: React.FormEvent) => {
     e.preventDefault();
@@ -116,14 +98,14 @@ export const TweeterraView: React.FC<TweeterraViewProps> = ({
 
   return (
     <div id="tweeterra-view-root" className="max-w-2xl mx-auto space-y-5 pb-36 font-sans">
-      {/* HEADER TWEETERRA / TERRA-ZONE */}
+      {/* HEADER TWEETERRA */}
       <div className="flex items-center justify-between pt-1">
         <div>
           <h2 className="text-2xl font-black tracking-tight text-slate-900">
-            Tweeterra & Zone
+            Tweeterra
           </h2>
           <p className="text-xs text-slate-400 font-medium mt-0.5">
-            Polling harian, menfess & tempat cerita santai angkatan
+            Ceritakan harimu!
           </p>
         </div>
 
@@ -137,65 +119,10 @@ export const TweeterraView: React.FC<TweeterraViewProps> = ({
         </button>
       </div>
 
-      {/* 1. GAMIFIKASI: DAILY POLL OF THE DAY (STYLE VISILY MINT/PURPLE) */}
-      <section className="bg-gradient-to-br from-indigo-50/90 via-purple-50/50 to-slate-50 rounded-3xl p-5 border border-indigo-100 shadow-xs space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-indigo-600 text-white flex items-center gap-1">
-              <Sparkles size={10} />
-              VOTE HARI INI
-            </span>
-            <span className="text-xs font-bold text-slate-400">Total {totalPollVotes} Suara</span>
-          </div>
-          <BarChart2 size={18} className="text-indigo-500" />
-        </div>
-
-        <div>
-          <h3 className="text-sm font-extrabold text-slate-900 leading-snug">
-            Kosan paling strategis & favorit anak Terravana 2026?
-          </h3>
-        </div>
-
-        {/* OPTIONS & RESULTS BAR */}
-        <div className="space-y-2 pt-1">
-          {pollOptions.map((opt, idx) => {
-            const count = pollVotes[idx] || 0;
-            const percent = totalPollVotes > 0 ? Math.round((count / totalPollVotes) * 100) : 0;
-
-            return (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => handleVote(idx)}
-                className={`relative w-full p-3 rounded-2xl border text-left transition-all overflow-hidden ${
-                  selectedPollOption === idx
-                    ? 'border-indigo-500 bg-indigo-100/50'
-                    : 'border-slate-200/80 bg-white/80 hover:bg-white'
-                }`}
-              >
-                {/* PROGRESS BAR BACKGROUND */}
-                {hasVoted && (
-                  <div
-                    className="absolute top-0 left-0 bottom-0 bg-indigo-200/50 transition-all duration-500"
-                    style={{ width: `${percent}%` }}
-                  />
-                )}
-
-                <div className="relative flex items-center justify-between text-xs font-bold text-slate-800">
-                  <span>{opt}</span>
-                  {hasVoted && <span className="text-indigo-700 font-extrabold">{percent}%</span>}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* 2. UNIFIED FEED CONTAINER (VISILY CARD STYLE) */}
+      {/* FEED CONTAINER (VISILY CARD STYLE) */}
       <section className="space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-extrabold text-slate-900">Linimasa & Menfess</h3>
-          <span className="text-xs font-bold text-slate-400">{posts.length} Postingan</span>
+          <h3 className="text-sm font-extrabold text-slate-900">Timeline</h3>
         </div>
 
         <div className="space-y-3">
