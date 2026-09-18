@@ -102,7 +102,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               )}
             </div>
             <p className="text-xs sm:text-sm text-slate-500 font-normal mt-0.5">
-              Selamat datang di portal kaderisasi & kolaborasi angkatan Terravana.
+              Selamat datang di myTerravana!
             </p>
           </div>
         </div>
