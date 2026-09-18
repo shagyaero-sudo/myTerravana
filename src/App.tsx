@@ -31,17 +31,36 @@ export default function App() {
   const [selectedStudent, setSelectedStudent] = useState<StudentUser | null>(null);
   const [isAddAgendaOpen, setIsAddAgendaOpen] = useState(false);
 
-  // Total students count representation (170 university students in Terravana cohort)
+  // Total students count representation (170 university students)
   const TOTAL_COHORT_SIZE = 170;
 
-  // Mastered count: calculate from actual mastered students + base cohort progress
-  const masteredBaseCount = 85; // Baseline cohort mastery count
+  // Mastered count calculation
+  const masteredBaseCount = 85;
   const locallyMasteredCount = students.filter((s) => s.mastered).length;
   const initialMasteredMockCount = MOCK_STUDENTS.filter((s) => s.mastered).length;
   const currentMasteredCount = Math.min(
     TOTAL_COHORT_SIZE,
     masteredBaseCount + (locallyMasteredCount - initialMasteredMockCount)
   );
+
+  // Toggle mode isOfficer
+  const handleToggleOfficerMode = (isOfficer: boolean) => {
+    setCurrentUser((prev) => ({ ...prev, is_officer: isOfficer }));
+  };
+
+  // Handler Update Profil Mandiri
+  const handleSaveProfile = (updatedUser: Partial<StudentUser>) => {
+    const newCurrentUser = { ...currentUser, ...updatedUser };
+    setCurrentUser(newCurrentUser);
+
+    setStudents((prev) =>
+      prev.map((s) => (s.id === currentUser.id ? { ...s, ...updatedUser } : s))
+    );
+
+    if (selectedStudent && selectedStudent.id === currentUser.id) {
+      setSelectedStudent(newCurrentUser);
+    }
+  };
 
   // Agenda actions
   const handleToggleAgenda = (id: string) => {
@@ -91,6 +110,20 @@ export default function App() {
     );
   };
 
+  const handleDeletePost = (postId: string) => {
+    setPosts((prev) => prev.filter((p) => p.id !== postId));
+  };
+
+  const handleEditPost = (postId: string, newContent: string) => {
+    setPosts((prev) =>
+      prev.map((p) => (p.id === postId ? { ...p, content: newContent } : p))
+    );
+  };
+
+  const handleReportPost = (postId: string) => {
+    console.log(`Post ${postId} dilaporkan.`);
+  };
+
   // Student profile & mastery actions
   const handleSelectStudentByName = (studentName: string) => {
     const found = students.find(
@@ -119,16 +152,10 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F8FAFC] text-[#0F172A]">
-      {/* Top Header */}
-      <Header
-        currentUser={currentUser}
-        onOpenProfile={() => setSelectedStudent(currentUser)}
-        onQuickFinder={() => setActiveTab('terrafinder')}
-      />
+    <div className="min-h-screen flex flex-col bg-[#FBFBFD] text-[#0F172A]">
+      <Header />
 
-      {/* Main Content Area with Spring Fade Transition */}
-      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 pt-5">
+      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 pt-2">
         <AnimatePresence mode="wait">
           {activeTab === 'dashboard' && (
             <motion.div
@@ -149,7 +176,8 @@ export default function App() {
                 masteredCount={currentMasteredCount}
                 totalStudents={TOTAL_COHORT_SIZE}
                 onNavigateTab={setActiveTab}
-                onSelectStudent={setSelectedStudent}
+                onOpenProfile={() => setSelectedStudent(currentUser)}
+                onToggleOfficerMode={handleToggleOfficerMode}
               />
             </motion.div>
           )}
@@ -169,6 +197,9 @@ export default function App() {
                 onToggleLike={handleToggleLike}
                 onAddComment={handleAddComment}
                 onSelectStudent={handleSelectStudentByName}
+                onDeletePost={handleDeletePost}
+                onEditPost={handleEditPost}
+                onReportPost={handleReportPost}
               />
             </motion.div>
           )}
@@ -209,25 +240,23 @@ export default function App() {
         </AnimatePresence>
       </main>
 
-      {/* Floating Bottom Pill Navbar */}
       <Navbar
         activeTab={activeTab}
         onSelectTab={setActiveTab}
         unmasteredQuizCount={TOTAL_COHORT_SIZE - currentMasteredCount}
       />
 
-      {/* Add Agenda Modal */}
       <AddAgendaModal
         isOpen={isAddAgendaOpen}
         onClose={() => setIsAddAgendaOpen(false)}
         onAdd={handleAddAgenda}
       />
 
-      {/* Student Detail Modal */}
       <StudentDetailModal
         student={selectedStudent}
+        currentUser={currentUser}
         onClose={() => setSelectedStudent(null)}
-        onToggleMastered={handleToggleMastered}
+        onSaveProfile={handleSaveProfile}
       />
     </div>
   );

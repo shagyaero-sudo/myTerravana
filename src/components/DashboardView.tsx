@@ -11,6 +11,9 @@ import {
   AlertTriangle,
   Users,
   Edit3,
+  Pencil,
+  X,
+  ShieldCheck,
 } from 'lucide-react';
 import {
   StudentUser,
@@ -32,8 +35,9 @@ interface DashboardViewProps {
   totalStudents: number;
   onNavigateTab: (tab: TabType) => void;
   onOpenProfile: () => void;
-  onEditAnnouncement?: () => void; // Khusus Officer / BPH
-  onEditAgenda?: (item: AgendaItem) => void; // Khusus Officer / BPH
+  onToggleOfficerMode: (isOfficer: boolean) => void;
+  onEditAnnouncement?: () => void;
+  onEditAgenda?: (item: AgendaItem) => void;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
@@ -47,10 +51,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   totalStudents,
   onNavigateTab,
   onOpenProfile,
+  onToggleOfficerMode,
   onEditAnnouncement,
   onEditAgenda,
 }) => {
   const [timeLeft, setTimeLeft] = useState({ days: 2, hours: 14, minutes: 22, seconds: 40 });
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [pin, setPin] = useState('');
+  const [pinError, setPinError] = useState(false);
+
+  const BPH_SECRET_PIN = '2026';
 
   useEffect(() => {
     const targetDate = new Date(announcement.countdown_target).getTime();
@@ -69,30 +79,59 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     return () => clearInterval(interval);
   }, [announcement.countdown_target]);
 
+  const handleVerifyPin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (pin === BPH_SECRET_PIN) {
+      onToggleOfficerMode(true);
+      setIsAuthModalOpen(false);
+      setPin('');
+      setPinError(false);
+    } else {
+      setPinError(true);
+      setPin('');
+    }
+  };
+
   const kpiPercentage = Math.round((masteredCount / totalStudents) * 100);
 
   return (
     <div id="dashboard-view-root" className="space-y-6 pt-4 pb-28">
-      {/* 1. HERO HEADER (DENGAN FOTO PROFIL DI SEBELAH GREETING) */}
+      {/* 1. HERO HEADER */}
       <section id="dashboard-hero" className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
+          {/* FOTO PROFIL + BADGE POTLOT */}
           <button
             type="button"
             onClick={onOpenProfile}
             className="relative group shrink-0"
-            title="Klik untuk lihat / edit profil"
+            title="Klik untuk ubah biodata profil"
           >
             <img
               src={currentUser.avatar}
               alt={currentUser.name}
               className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover ring-2 ring-black/5 group-hover:ring-slate-900 transition-all"
             />
-            <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-500 ring-2 ring-white"></span>
+            <span className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-slate-900 text-white flex items-center justify-center ring-2 ring-white shadow-xs group-hover:bg-amber-500 transition-colors">
+              <Pencil size={10} />
+            </span>
           </button>
 
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900">
+            {/* TEKS GREETING -> PEMICU PIN BPH */}
+            <div
+              onClick={() => {
+                if (!currentUser.is_officer) {
+                  setIsAuthModalOpen(true);
+                } else {
+                  if (confirm('Matikan mode BPH / Officer?')) {
+                    onToggleOfficerMode(false);
+                  }
+                }
+              }}
+              className="flex items-center gap-2 cursor-pointer group"
+              title={currentUser.is_officer ? 'Klik untuk matikan mode BPH' : 'Klik untuk masuk mode BPH / Pengurus'}
+            >
+              <span className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 group-hover:text-slate-700 transition-colors">
                 Halo, {currentUser.nickname} 👋
               </span>
               {currentUser.is_officer && (
@@ -125,7 +164,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </span>
               <span className="text-xs text-slate-400 font-medium">{announcement.date}</span>
 
-              {/* Edit Button untuk Officer */}
               {currentUser.is_officer && onEditAnnouncement && (
                 <button
                   type="button"
@@ -146,7 +184,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </p>
           </div>
 
-          {/* Countdown Box */}
           <div className="flex flex-col sm:items-end justify-center shrink-0 pt-2 md:pt-0">
             <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 sm:text-right">
               Hitung Mundur Sidang / Forum
@@ -171,9 +208,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
       </section>
 
-      {/* 3. BENTO GRID: INTERACTIVE AGENDA + TERRAQUIZ */}
+      {/* 3. BENTO GRID */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        {/* AGENDA & JADWAL */}
         <section
           id="interactive-agenda-widget"
           className="lg:col-span-7 bg-white rounded-2xl border border-black/[0.06] p-5 sm:p-6 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.03)] flex flex-col justify-between"
@@ -187,7 +223,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </h3>
               </div>
 
-              {/* + Add Agenda (Officer mode atau user personal note) */}
               <button
                 type="button"
                 onClick={onOpenAddAgenda}
@@ -247,7 +282,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         </span>
                       </div>
 
-                      {/* Mode Officer: Edit button per agenda */}
                       {currentUser.is_officer && onEditAgenda && (
                         <button
                           type="button"
@@ -275,7 +309,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
         </section>
 
-        {/* TERRAQUIZ WIDGET (RE-NAMED DARI COHORT PULSE) */}
         <section id="terraquiz-widget" className="lg:col-span-5 bg-white rounded-2xl border border-black/[0.06] p-5 sm:p-6 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.03)] flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
@@ -310,7 +343,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </div>
             </div>
 
-            {/* LEADERBOARD TOP 3 */}
             <div className="mt-5 pt-4 border-t border-slate-100">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
@@ -363,6 +395,63 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
         </section>
       </div>
+
+      {/* MODAL AUTH PIN BPH (INLINED DI DALAM DASHBOARDVIEW) */}
+      {isAuthModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="relative w-full max-w-xs bg-white rounded-3xl border border-black/[0.08] shadow-2xl p-6 text-center">
+            <button
+              type="button"
+              onClick={() => {
+                setIsAuthModalOpen(false);
+                setPin('');
+                setPinError(false);
+              }}
+              className="absolute top-4 right-4 w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition-colors"
+            >
+              <X size={16} />
+            </button>
+
+            <div className="w-12 h-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center mx-auto mb-3 shadow-sm">
+              <ShieldCheck size={24} />
+            </div>
+
+            <h3 className="text-base font-bold text-slate-900">Akses BPH / Pengurus</h3>
+            <p className="text-xs text-slate-500 mt-1">
+              Masukkan 4 digit PIN rahasia untuk mengaktifkan fitur edit khusus BPH.
+            </p>
+
+            <form onSubmit={handleVerifyPin} className="mt-4 space-y-3">
+              <input
+                type="password"
+                maxLength={4}
+                autoFocus
+                placeholder="••••"
+                value={pin}
+                onChange={(e) => {
+                  setPin(e.target.value);
+                  setPinError(false);
+                }}
+                className="w-full text-center text-xl tracking-[0.5em] font-mono py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:border-slate-900"
+              />
+
+              {pinError && (
+                <p className="text-[11px] font-semibold text-rose-600">
+                  Kode PIN salah! Silakan coba lagi.
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={pin.length !== 4}
+                className="w-full py-2.5 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 disabled:bg-slate-100 disabled:text-slate-400 transition-all"
+              >
+                Verifikasi Kode
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

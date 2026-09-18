@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, MessageCircle, MapPin, BookOpen, Heart, Edit2, Lock, Save } from 'lucide-react';
 import { StudentUser } from '../types';
 
@@ -15,12 +15,30 @@ export const StudentDetailModal: React.FC<StudentDetailModalProps> = ({
   onClose,
   onSaveProfile,
 }) => {
+  // 1. Guard Clause jika modal tidak aktif / student null
   if (!student) return null;
 
+  return (
+    <StudentDetailModalContent
+      student={student}
+      currentUser={currentUser}
+      onClose={onClose}
+      onSaveProfile={onSaveProfile}
+    />
+  );
+};
+
+// Komponen terpisah agar Hooks safe dari kondisi null
+const StudentDetailModalContent: React.FC<{
+  student: StudentUser;
+  currentUser: StudentUser;
+  onClose: () => void;
+  onSaveProfile?: (updatedUser: Partial<StudentUser>) => void;
+}> = ({ student, currentUser, onClose, onSaveProfile }) => {
   const isOwnProfile = student.id === currentUser.id;
   const [isEditing, setIsEditing] = useState(false);
 
-  // Form states untuk edit profil
+  // Form states aman diakses karena student dijamin ada
   const [name, setName] = useState(student.name);
   const [nickname, setNickname] = useState(student.nickname);
   const [nrp, setNrp] = useState(student.nrp);
@@ -30,6 +48,17 @@ export const StudentDetailModal: React.FC<StudentDetailModalProps> = ({
   const [hobbies, setHobbies] = useState(student.hobbies ? student.hobbies.join(', ') : '');
   const [password, setPassword] = useState('');
 
+  // Update state form jika data student berubah
+  useEffect(() => {
+    setName(student.name);
+    setNickname(student.nickname);
+    setNrp(student.nrp);
+    setRegion(student.region);
+    setKosAddress(student.kos_address || '');
+    setMotto(student.motto || '');
+    setHobbies(student.hobbies ? student.hobbies.join(', ') : '');
+  }, [student]);
+
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     if (onSaveProfile) {
@@ -37,7 +66,7 @@ export const StudentDetailModal: React.FC<StudentDetailModalProps> = ({
         name,
         nickname,
         nrp,
-        region,
+        region: region as any,
         kos_address: kosAddress,
         motto,
         hobbies: hobbies.split(',').map((h) => h.trim()).filter(Boolean),
