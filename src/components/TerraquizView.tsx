@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Flame,
@@ -21,6 +21,11 @@ interface TerraquizViewProps {
   totalStudents: number;
 }
 
+interface QuizQuestion {
+  student: StudentUser;
+  options: string[];
+}
+
 export const TerraquizView: React.FC<TerraquizViewProps> = ({
   students,
   onUpdateMastered,
@@ -28,9 +33,8 @@ export const TerraquizView: React.FC<TerraquizViewProps> = ({
   masteredCount,
   totalStudents,
 }) => {
-  // Antrean khusus untuk mengulang mahasiswa yang salah dijawab
   const [reviewQueue, setReviewQueue] = useState<string[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentQuestion, setCurrentQuestion] = useState<QuizQuestion | null>(null);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isAnswered, setIsAnswered] = useState(false);
   
@@ -40,46 +44,58 @@ export const TerraquizView: React.FC<TerraquizViewProps> = ({
   const [sessionCorrect, setSessionCorrect] = useState(0);
   const [sessionTotal, setSessionTotal] = useState(0);
   const [showHint, setShowHint] = useState(false);
+  const [questionCount, setQuestionCount] = useState(0);
 
-  // Lock options state agar tidak ter-acak ulang saat re-render / diklik
-  const [currentOptions, setCurrentOptions] = useState<string[]>([]);
+  // FUNGSI BUAT SOAL BARU (Bungkus foto + opsi pilihan dalam 1 paket mati)
+  const generateNewQuestion = useCallback(() => {
+    if (students.length === 0) return;
 
-  // Tentukan mahasiswa aktif (Utamakan dari reviewQueue jika ada, lalu dari unmastered/semua)
-  const currentStudent = useMemo(() => {
-    if (students.length === 0) return null;
+    let targetStudent: StudentUser | undefined;
 
-    // Cek apakah ada mahasiswa di antrean pengulangan (salah jawab)
-    if (reviewQueue.length > 0 && currentIndex % 3 === 0) {
-      const reviewTargetId = reviewQueue[0];
-      const found = students.find((s) => s.id === reviewTargetId);
-      if (found) return found;
+    // Cek apakah ada antrean salah jawab
+    if (reviewQueue.length > 0 && questionCount % 3 === 0) {
+      const reviewId = reviewQueue[0];
+      targetStudent = students.find((s) => s.id === reviewId);
     }
 
-    // Prioritaskan mahasiswa yang belum dihafal
-    const unmastered = students.filter((s) => !s.mastered);
-    const pool = unmastered.length > 0 ? unmastered : students;
-    
-    return pool[currentIndex % pool.length];
-  }, [students, reviewQueue, currentIndex]);
+    // Jika tidak ada di review queue, ambil dari mahasiswa yang belum dihafal / acak
+    if (!targetStudent) {
+      const unmastered = students.filter((s) => !s.mastered);
+      const pool = unmastered.length > 0 ? unmastered : students;
+      targetStudent = pool[Math.floor(Math.random() * pool.length)];
+    }
 
-  // Lock pilihan jawaban ketika mahasiswa aktif berganti
-  useEffect(() => {
-    if (!currentStudent) return;
-    const correct = currentStudent.name;
-    const others = students.filter((s) => s.id !== currentStudent.id);
+    // Acak 3 pilihan salah
+    const others = students.filter((s) => s.id !== targetStudent!.id);
     const shuffledOthers = [...others].sort(() => 0.5 - Math.random());
-    const wrong = shuffledOthers.slice(0, 3).map((s) => s.name);
+    const wrongOptions = shuffledOthers.slice(0, 3).map((s) => s.name);
 
-    setCurrentOptions([correct, ...wrong].sort(() => 0.5 - Math.random()));
-  }, [currentStudent, students]);
+    // Combine & lock opsi
+    const lockedOptions = [targetStudent.name, ...wrongOptions].sort(() => 0.5 - Math.random());
+
+    setCurrentQuestion({
+      student: targetStudent,
+      options: lockedOptions,
+    });
+    setSelectedOption(null);
+    setIsAnswered(false);
+    setShowHint(false);
+  }, [students, reviewQueue, questionCount]);
+
+  // Generate soal pertama pas pertama kali render
+  useEffect(() => {
+    if (!currentQuestion && students.length > 0) {
+      generateNewQuestion();
+    }
+  }, [students, currentQuestion, generateNewQuestion]);
 
   const handleSelectOption = (optionName: string) => {
-    if (isAnswered || !currentStudent) return;
+    if (isAnswered || !currentQuestion) return;
 
     setSelectedOption(optionName);
     setIsAnswered(true);
 
-    const isCorrect = optionName === currentStudent.name;
+    const isCorrect = optionName === currentQuestion.student.name;
 
     if (isCorrect) {
       const newStreak = streak + 1;
@@ -88,48 +104,47 @@ export const TerraquizView: React.FC<TerraquizViewProps> = ({
       setSessionCorrect((prev) => prev + 1);
       setSessionTotal((prev) => prev + 1);
 
-      // Hapus dari antrean pengulangan jika tadi sempat salah
-      setReviewQueue((prev) => prev.filter((id) => id !== currentStudent.id));
+      // Hapus dari antrean review kalau benar
+      setReviewQueue((prev) => prev.filter((id) => id !== currentQuestion.student.id));
 
-      // Tandai mastered untuk KPI Angkatan
-      onUpdateMastered(currentStudent.id, true);
+      // Update KPI Angkatan
+      onUpdateMastered(currentQuestion.student.id, true);
     } else {
       setStreak(0);
       setSessionTotal((prev) => prev + 1);
 
-      // Masukkan ke antrean pengulangan agar muncul kembali dalam 3 soal ke depan
-      if (!reviewQueue.includes(currentStudent.id)) {
-        setReviewQueue((prev) => [...prev, currentStudent.id]);
+      // Masukkan ke antrean review kalau salah
+      if (!reviewQueue.includes(currentQuestion.student.id)) {
+        setReviewQueue((prev) => [...prev, currentQuestion.student.id]);
       }
     }
   };
 
   const handleNextQuestion = () => {
-    setSelectedOption(null);
-    setIsAnswered(false);
-    setShowHint(false);
-    setCurrentIndex((prev) => prev + 1);
+    setQuestionCount((prev) => prev + 1);
+    generateNewQuestion();
   };
 
   const handleResetSession = () => {
-    setSelectedOption(null);
-    setIsAnswered(false);
-    setShowHint(false);
     setStreak(0);
+    setBestStreak(0);
     setSessionCorrect(0);
     setSessionTotal(0);
-    setCurrentIndex(0);
     setReviewQueue([]);
+    setQuestionCount(0);
+    generateNewQuestion();
   };
 
   const accuracy = sessionTotal > 0 ? Math.round((sessionCorrect / sessionTotal) * 100) : 100;
   const kpiPercentage = Math.round((masteredCount / totalStudents) * 100);
 
-  if (!currentStudent) return null;
+  if (!currentQuestion) return null;
+
+  const { student: currentStudent, options: currentOptions } = currentQuestion;
 
   return (
     <div id="terraquiz-view-root" className="max-w-2xl mx-auto space-y-5 pb-36 font-sans">
-      {/* 1. HEADER RINGKAS (TANPA TOGGLE FILTER) */}
+      {/* 1. HEADER */}
       <div className="pt-1">
         <h2 className="text-2xl font-black tracking-tight text-slate-900">
           Terraquiz
@@ -139,9 +154,8 @@ export const TerraquizView: React.FC<TerraquizViewProps> = ({
         </p>
       </div>
 
-      {/* 2. UNIFIED PROGRESS BAR (VISILY STYLE) */}
+      {/* 2. UNIFIED PROGRESS BAR */}
       <div className="bg-slate-50 rounded-3xl p-4 border border-slate-100 flex items-center justify-between gap-3 text-xs">
-        {/* KPI Score */}
         <div className="flex items-center gap-2">
           <span className="font-extrabold text-slate-900">{masteredCount}/{totalStudents}</span>
           <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-md">
@@ -151,7 +165,6 @@ export const TerraquizView: React.FC<TerraquizViewProps> = ({
 
         <div className="h-4 w-px bg-slate-200" />
 
-        {/* Live Streak */}
         <div className="flex items-center gap-1 font-extrabold text-slate-800">
           <Flame size={14} className="fill-amber-500 text-amber-500" />
           <span>{streak}x Streak</span>
@@ -159,7 +172,6 @@ export const TerraquizView: React.FC<TerraquizViewProps> = ({
 
         <div className="h-4 w-px bg-slate-200" />
 
-        {/* Live Accuracy */}
         <div className="flex items-center gap-1 font-extrabold text-slate-800">
           <Zap size={14} className="text-indigo-600" />
           <span>{accuracy}% Akurasi</span>
@@ -171,10 +183,11 @@ export const TerraquizView: React.FC<TerraquizViewProps> = ({
         id="terraquiz-card"
         className="bg-white rounded-3xl border border-slate-100 p-5 sm:p-7 shadow-xs flex flex-col items-center"
       >
-        {/* Photo Card with Mastered Badge */}
+        {/* Photo Card dengan Key Unik untuk Cegah Glitch Foto */}
         <div className="relative mb-5">
           <div className="relative w-44 h-44 sm:w-52 sm:h-52 rounded-3xl overflow-hidden ring-4 ring-slate-100 shadow-xs bg-slate-100">
             <img
+              key={currentStudent.id}
               src={currentStudent.avatar}
               alt="Tebak Siapakah Mahasiswa Ini?"
               className="w-full h-full object-cover select-none pointer-events-none"
@@ -219,7 +232,7 @@ export const TerraquizView: React.FC<TerraquizViewProps> = ({
           </p>
         </div>
 
-        {/* 4 Multiple Choice Options (Locked Array) */}
+        {/* 4 Multiple Choice Options */}
         <div className="w-full grid grid-cols-1 gap-2.5">
           {currentOptions.map((option, index) => {
             const letter = String.fromCharCode(65 + index);
@@ -243,7 +256,7 @@ export const TerraquizView: React.FC<TerraquizViewProps> = ({
 
             return (
               <motion.button
-                key={option}
+                key={`${currentStudent.id}-${option}`}
                 type="button"
                 whileTap={!isAnswered ? { scale: 0.98 } : {}}
                 onClick={() => handleSelectOption(option)}
@@ -320,7 +333,7 @@ export const TerraquizView: React.FC<TerraquizViewProps> = ({
         </AnimatePresence>
       </div>
 
-      {/* SESSION RESET */}
+      {/* RESET SESI */}
       <div className="flex justify-end text-xs text-slate-400 px-1 font-medium">
         <button
           type="button"
