@@ -1,0 +1,7 @@
+{
+  "name": "myTerravana",
+  "description": "Minimalist cohort community platform for 170 university students with iOS-inspired white mode aesthetic, dashboard bento grid, Tweeterra feed, Terraquiz photo recognition, and Terrafinder directory.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
