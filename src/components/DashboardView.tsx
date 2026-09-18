@@ -95,11 +95,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const kpiPercentage = Math.round((masteredCount / totalStudents) * 100);
 
   return (
-    <div id="dashboard-view-root" className="space-y-6 pt-4 pb-28">
-      {/* 1. HERO HEADER */}
+    <div id="dashboard-view-root" className="space-y-6 pt-2 pb-32">
+      {/* 1. HERO HEADER (HERO STYLE SOFT SLEEK) */}
       <section id="dashboard-hero" className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          {/* FOTO PROFIL + BADGE POTLOT */}
+        <div className="flex items-center gap-3.5">
           <button
             type="button"
             onClick={onOpenProfile}
@@ -109,15 +108,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <img
               src={currentUser.avatar}
               alt={currentUser.name}
-              className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover ring-2 ring-black/5 group-hover:ring-slate-900 transition-all"
+              className="w-13 h-13 sm:w-15 sm:h-15 rounded-3xl object-cover ring-4 ring-white shadow-md group-hover:scale-105 transition-transform"
             />
-            <span className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-slate-900 text-white flex items-center justify-center ring-2 ring-white shadow-xs group-hover:bg-amber-500 transition-colors">
+            <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#1E2022] text-white flex items-center justify-center ring-2 ring-white shadow-sm group-hover:bg-amber-500 transition-colors">
               <Pencil size={10} />
             </span>
           </button>
 
           <div>
-            {/* TEKS GREETING -> PEMICU PIN BPH */}
             <div
               onClick={() => {
                 if (!currentUser.is_officer) {
@@ -131,16 +129,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               className="flex items-center gap-2 cursor-pointer group"
               title={currentUser.is_officer ? 'Klik untuk matikan mode BPH' : 'Klik untuk masuk mode BPH / Pengurus'}
             >
-              <span className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 group-hover:text-slate-700 transition-colors">
+              <span className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 group-hover:text-slate-700 transition-colors">
                 Halo, {currentUser.nickname} 👋
               </span>
               {currentUser.is_officer && (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-slate-900 text-white">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-[#1E2022] text-white shadow-xs">
                   Officer / BPH
                 </span>
               )}
             </div>
-            <p className="text-xs sm:text-sm text-slate-500 font-normal mt-0.5">
+            <p className="text-xs sm:text-sm text-slate-400 font-medium mt-0.5">
               Selamat datang di myTerravana!
             </p>
           </div>
@@ -150,16 +148,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       {/* 2. PINNED ANNOUNCEMENT BANNER */}
       <section
         id="pinned-announcement-banner"
-        className="relative overflow-hidden rounded-2xl bg-white border border-black/[0.06] p-5 sm:p-6 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.03)]"
+        className="relative overflow-hidden rounded-3xl bg-white/80 backdrop-blur-xl border border-black/[0.04] p-5 sm:p-6 shadow-[0_8px_30px_rgb(0,0,0,0.03)]"
       >
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-2 max-w-2xl">
+          <div className="space-y-2.5 max-w-2xl">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200/60">
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200/60">
                 <AlertTriangle size={12} className="text-rose-600" />
                 PENGUMUMAN URGENT
               </span>
-              <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600">
+              <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600">
                 {announcement.category}
               </span>
               <span className="text-xs text-slate-400 font-medium">{announcement.date}</span>
@@ -168,7 +166,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <button
                   type="button"
                   onClick={onEditAnnouncement}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900 hover:bg-amber-200 transition-colors"
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[10px] font-bold bg-amber-100 text-amber-900 hover:bg-amber-200 transition-colors"
                 >
                   <Edit3 size={11} />
                   <span>Edit Pengumuman</span>
@@ -176,7 +174,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               )}
             </div>
 
-            <h2 className="text-base sm:text-lg font-bold text-slate-900 leading-snug">
+            <h2 className="text-base sm:text-lg font-extrabold text-slate-900 leading-snug">
               {announcement.title}
             </h2>
             <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
@@ -184,24 +182,25 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </p>
           </div>
 
+          {/* COUNTDOWN BOX (DARK PILL STYLE REFRENSI GOLF APP) */}
           <div className="flex flex-col sm:items-end justify-center shrink-0 pt-2 md:pt-0">
-            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 sm:text-right">
+            <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1.5 sm:text-right">
               Hitung Mundur Sidang / Forum
             </div>
-            <div className="flex items-center gap-1.5">
-              <div className="flex flex-col items-center justify-center w-12 h-13 rounded-xl bg-slate-50 border border-slate-200/70">
-                <span className="text-base font-extrabold text-slate-900">{timeLeft.days}</span>
-                <span className="text-[9px] font-semibold text-slate-400 uppercase">Hari</span>
+            <div className="flex items-center gap-2 bg-[#1E2022] text-white p-2.5 rounded-2xl shadow-md">
+              <div className="flex flex-col items-center px-2">
+                <span className="text-base font-black text-white">{timeLeft.days}</span>
+                <span className="text-[8px] font-bold text-slate-400 uppercase">Hari</span>
               </div>
-              <span className="text-slate-300 font-bold">:</span>
-              <div className="flex flex-col items-center justify-center w-12 h-13 rounded-xl bg-slate-50 border border-slate-200/70">
-                <span className="text-base font-extrabold text-slate-900">{timeLeft.hours}</span>
-                <span className="text-[9px] font-semibold text-slate-400 uppercase">Jam</span>
+              <span className="text-slate-600 font-bold">:</span>
+              <div className="flex flex-col items-center px-2">
+                <span className="text-base font-black text-white">{timeLeft.hours}</span>
+                <span className="text-[8px] font-bold text-slate-400 uppercase">Jam</span>
               </div>
-              <span className="text-slate-300 font-bold">:</span>
-              <div className="flex flex-col items-center justify-center w-12 h-13 rounded-xl bg-slate-50 border border-slate-200/70">
-                <span className="text-base font-extrabold text-slate-900">{timeLeft.minutes}</span>
-                <span className="text-[9px] font-semibold text-slate-400 uppercase">Menit</span>
+              <span className="text-slate-600 font-bold">:</span>
+              <div className="flex flex-col items-center px-2">
+                <span className="text-base font-black text-white">{timeLeft.minutes}</span>
+                <span className="text-[8px] font-bold text-slate-400 uppercase">Menit</span>
               </div>
             </div>
           </div>
@@ -210,15 +209,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
       {/* 3. BENTO GRID */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        {/* AGENDA & JADWAL */}
         <section
           id="interactive-agenda-widget"
-          className="lg:col-span-7 bg-white rounded-2xl border border-black/[0.06] p-5 sm:p-6 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.03)] flex flex-col justify-between"
+          className="lg:col-span-7 bg-white/80 backdrop-blur-xl rounded-3xl border border-black/[0.04] p-5 sm:p-6 shadow-[0_8px_30px_rgb(0,0,0,0.03)] flex flex-col justify-between"
         >
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <Calendar size={18} className="text-slate-700" />
-                <h3 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">
+                <Calendar size={18} className="text-slate-800" />
+                <h3 className="text-sm sm:text-base font-black text-slate-900 tracking-tight">
                   Agenda & Jadwal Angkatan
                 </h3>
               </div>
@@ -226,7 +226,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <button
                 type="button"
                 onClick={onOpenAddAgenda}
-                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-900 bg-slate-100 hover:bg-slate-200/80 transition-colors"
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-[#1E2022] hover:bg-slate-800 transition-colors shadow-sm"
               >
                 <Plus size={14} />
                 <span>+ Add Agenda</span>
@@ -237,10 +237,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               {agendas.map((item) => (
                 <div
                   key={item.id}
-                  className={`group flex items-start gap-3 p-3 rounded-xl border transition-all ${
+                  className={`group flex items-start gap-3 p-3.5 rounded-2xl border transition-all ${
                     item.is_completed
-                      ? 'bg-slate-50/70 border-slate-100 text-slate-400'
-                      : 'bg-white border-slate-200/70 hover:border-slate-300 shadow-xs'
+                      ? 'bg-slate-50/60 border-slate-100 text-slate-400'
+                      : 'bg-white border-slate-200/60 hover:border-slate-300 shadow-xs'
                   }`}
                 >
                   <button
@@ -266,9 +266,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                           {item.title}
                         </span>
                         <span
-                          className={`px-2 py-0.2 rounded text-[10px] font-semibold ${
+                          className={`px-2 py-0.2 rounded-md text-[10px] font-bold ${
                             item.type === 'cadre'
-                              ? 'bg-slate-900 text-white'
+                              ? 'bg-[#1E2022] text-white'
                               : item.type === 'academic'
                               ? 'bg-amber-100 text-amber-800'
                               : 'bg-slate-100 text-slate-600'
@@ -294,7 +294,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       )}
                     </div>
 
-                    <div className="flex items-center gap-3 mt-1 text-[11px] text-slate-400 font-medium">
+                    <div className="flex items-center gap-3 mt-1.5 text-[11px] text-slate-400 font-medium">
                       <span className="flex items-center gap-1">
                         <Clock size={12} />
                         {item.date} • {item.time}
@@ -309,12 +309,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
         </section>
 
-        <section id="terraquiz-widget" className="lg:col-span-5 bg-white rounded-2xl border border-black/[0.06] p-5 sm:p-6 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.03)] flex flex-col justify-between">
+        {/* TERRAQUIZ WIDGET */}
+        <section id="terraquiz-widget" className="lg:col-span-5 bg-white/80 backdrop-blur-xl rounded-3xl border border-black/[0.04] p-5 sm:p-6 shadow-[0_8px_30px_rgb(0,0,0,0.03)] flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Award size={18} className="text-slate-700" />
-                <h3 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">
+                <Award size={18} className="text-slate-800" />
+                <h3 className="text-sm sm:text-base font-black text-slate-900 tracking-tight">
                   Terraquiz
                 </h3>
               </div>
@@ -330,19 +331,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
             <div className="mt-4">
               <div className="flex items-baseline justify-between mb-1.5">
-                <span className="text-xs font-semibold text-slate-600">Terraquiz KPI (Target 100%)</span>
-                <span className="text-sm font-extrabold text-slate-900">
+                <span className="text-xs font-bold text-slate-500">Terraquiz KPI</span>
+                <span className="text-xs font-black text-slate-900">
                   {masteredCount}/{totalStudents} Dikuasai ({kpiPercentage}%)
                 </span>
               </div>
-              <div className="w-full h-2.5 rounded-full bg-slate-100 overflow-hidden">
+              <div className="w-full h-3 rounded-full bg-slate-100 overflow-hidden">
                 <div
-                  className="h-full bg-slate-900 rounded-full transition-all duration-500 ease-out"
+                  className="h-full bg-[#1E2022] rounded-full transition-all duration-500 ease-out"
                   style={{ width: `${Math.min(100, Math.max(0, kpiPercentage))}%` }}
                 />
               </div>
             </div>
 
+            {/* TOP 3 HAFALAN */}
             <div className="mt-5 pt-4 border-t border-slate-100">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
@@ -355,11 +357,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 {leaderboard.slice(0, 3).map((entry) => (
                   <div
                     key={entry.rank}
-                    className="flex items-center justify-between p-2 rounded-xl bg-slate-50/80 border border-slate-100"
+                    className="flex items-center justify-between p-2.5 rounded-2xl bg-slate-50/80 border border-slate-100"
                   >
                     <div className="flex items-center gap-2.5">
                       <span
-                        className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold ${
+                        className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black ${
                           entry.rank === 1
                             ? 'bg-amber-400 text-slate-950'
                             : entry.rank === 2
@@ -369,13 +371,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       >
                         {entry.rank}
                       </span>
-                      <img src={entry.avatar} alt={entry.name} className="w-6 h-6 rounded-full object-cover" />
+                      <img src={entry.avatar} alt={entry.name} className="w-7 h-7 rounded-full object-cover ring-1 ring-slate-200" />
                       <span className="text-xs font-bold text-slate-800 truncate max-w-[130px]">
                         {entry.name}
                       </span>
                     </div>
 
-                    <span className="text-xs font-bold text-slate-900">{entry.masteredCount} Anak</span>
+                    <span className="text-xs font-black text-slate-900">{entry.masteredCount} Anak</span>
                   </div>
                 ))}
               </div>
@@ -396,7 +398,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </section>
       </div>
 
-      {/* MODAL AUTH PIN BPH (INLINED DI DALAM DASHBOARDVIEW) */}
+      {/* MODAL AUTH PIN BPH */}
       {isAuthModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="relative w-full max-w-xs bg-white rounded-3xl border border-black/[0.08] shadow-2xl p-6 text-center">
@@ -412,7 +414,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <X size={16} />
             </button>
 
-            <div className="w-12 h-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center mx-auto mb-3 shadow-sm">
+            <div className="w-12 h-12 rounded-2xl bg-[#1E2022] text-white flex items-center justify-center mx-auto mb-3 shadow-sm">
               <ShieldCheck size={24} />
             </div>
 
@@ -432,7 +434,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   setPin(e.target.value);
                   setPinError(false);
                 }}
-                className="w-full text-center text-xl tracking-[0.5em] font-mono py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:border-slate-900"
+                className="w-full text-center text-xl tracking-[0.5em] font-mono py-2.5 rounded-2xl border border-slate-200 bg-slate-50 focus:outline-none focus:border-slate-900"
               />
 
               {pinError && (
@@ -444,7 +446,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <button
                 type="submit"
                 disabled={pin.length !== 4}
-                className="w-full py-2.5 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 disabled:bg-slate-100 disabled:text-slate-400 transition-all"
+                className="w-full py-2.5 rounded-2xl bg-[#1E2022] text-white text-xs font-bold hover:bg-slate-800 disabled:bg-slate-100 disabled:text-slate-400 transition-all"
               >
                 Verifikasi Kode
               </button>
