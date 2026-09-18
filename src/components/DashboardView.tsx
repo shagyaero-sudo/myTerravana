@@ -1,405 +1,400 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
-  Calendar,
+  Search,
+  Bell,
+  Calendar as CalendarIcon,
   Clock,
-  Plus,
-  CheckCircle2,
-  Circle,
-  Trophy,
-  AlertTriangle,
-  Users,
-  Edit3,
-  Pencil,
-  X,
-  ShieldCheck,
-  Sun,
+  MapPin,
+  Flame,
+  ArrowUpRight,
+  Instagram,
+  Youtube,
+  Send,
+  Sparkles,
   ChevronRight,
+  Megaphone,
+  X,
 } from 'lucide-react';
-import {
-  StudentUser,
-  Announcement,
-  AgendaItem,
-  LeaderboardEntry,
-  TabType,
-} from '../types';
+import { StudentUser } from '../types';
 
 interface DashboardViewProps {
   currentUser: StudentUser;
-  announcement: Announcement;
-  agendas: AgendaItem[];
-  onToggleAgenda: (id: string) => void;
-  onOpenAddAgenda: () => void;
   students: StudentUser[];
-  leaderboard: LeaderboardEntry[];
   masteredCount: number;
   totalStudents: number;
-  onNavigateTab: (tab: TabType) => void;
-  onOpenProfile: () => void;
-  onToggleOfficerMode: (isOfficer: boolean) => void;
-  onEditAnnouncement?: () => void;
-  onEditAgenda?: (item: AgendaItem) => void;
+  onNavigateToTab: (tabId: string) => void;
+  onSelectStudent: (student: StudentUser) => void;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
   currentUser,
-  announcement,
-  agendas,
-  onToggleAgenda,
-  onOpenAddAgenda,
-  leaderboard,
+  students,
   masteredCount,
   totalStudents,
-  onNavigateTab,
-  onOpenProfile,
-  onToggleOfficerMode,
-  onEditAnnouncement,
-  onEditAgenda,
+  onNavigateToTab,
+  onSelectStudent,
 }) => {
-  const [timeLeft, setTimeLeft] = useState({ days: 2, hours: 14, minutes: 22, seconds: 40 });
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [isDetailAnnouncementOpen, setIsDetailAnnouncementOpen] = useState(false);
-  const [pin, setPin] = useState('');
-  const [pinError, setPinError] = useState(false);
-
-  const BPH_SECRET_PIN = '2026';
-
-  useEffect(() => {
-    const targetDate = new Date(announcement.countdown_target).getTime();
-    const updateTimer = () => {
-      const now = Date.now();
-      const diff = Math.max(0, targetDate - now);
-      setTimeLeft({
-        days: Math.floor(diff / (1000 * 60 * 60 * 24)),
-        hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-        minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
-        seconds: Math.floor((diff % (1000 * 60)) / 1000),
-      });
-    };
-    updateTimer();
-    const interval = setInterval(updateTimer, 1000);
-    return () => clearInterval(interval);
-  }, [announcement.countdown_target]);
-
-  const handleVerifyPin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (pin === BPH_SECRET_PIN) {
-      onToggleOfficerMode(true);
-      setIsAuthModalOpen(false);
-      setPin('');
-      setPinError(false);
-    } else {
-      setPinError(true);
-      setPin('');
-    }
-  };
+  const [isAnnouncementOpen, setIsAnnouncementOpen] = useState(false);
 
   const kpiPercentage = Math.round((masteredCount / totalStudents) * 100);
+  const topMasteredStudents = students.filter((s) => s.mastered).slice(0, 4);
+
+  // Strip Tanggal Mingguan (Mock Active Calendar)
+  const weekDays = [
+    { day: 'Sun', date: '22', active: false },
+    { day: 'Mon', date: '23', active: false },
+    { day: 'Tue', date: '24', active: false },
+    { day: 'Wed', date: '25', active: true },
+    { day: 'Thu', date: '26', active: false },
+    { day: 'Fri', date: '27', active: false },
+  ];
 
   return (
-    <div id="dashboard-view-root" className="space-y-6 pt-2 pb-36 font-sans">
-      {/* 1. TOP BAR: LOGO ANGKATAN TRANSPARAN & AVATAR PROFIL */}
-      <div className="flex items-center justify-between">
-        <div className="w-10 h-10 shrink-0">
-          <img
-            src="/logoterravana.png"
-            alt="Terravana Phoenix Logo"
-            className="w-full h-full object-contain drop-shadow-xs"
-          />
-        </div>
-
-        <button
-          type="button"
-          onClick={onOpenProfile}
-          className="relative group shrink-0"
-          title="Klik untuk ubah profil"
-        >
-          <img
-            src={currentUser.avatar}
-            alt={currentUser.name}
-            className="w-11 h-11 rounded-full object-cover ring-2 ring-slate-100 group-hover:ring-slate-900 transition-all"
-          />
-          <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-slate-900 text-white flex items-center justify-center ring-2 ring-white">
-            <Pencil size={8} />
-          </span>
-        </button>
-      </div>
-
-      {/* 2. TANGGAL & GREETING USER */}
-      <div className="space-y-1">
-        <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-400">
-          <Sun size={13} className="text-amber-500" />
-          <span>JUMAT, 18 SEP</span>
-        </div>
-
-        <div className="flex items-center justify-between">
-          <h1
-            onClick={() => {
-              if (!currentUser.is_officer) {
-                setIsAuthModalOpen(true);
-              } else if (confirm('Matikan mode BPH / Officer?')) {
-                onToggleOfficerMode(false);
-              }
-            }}
-            className="text-3xl font-black tracking-tight text-slate-900 cursor-pointer hover:text-indigo-600 transition-colors"
-            title={currentUser.is_officer ? 'Mode BPH Aktif (Klik untuk matikan)' : 'Klik untuk masuk mode BPH'}
-          >
-            Halo, {currentUser.nickname} 👋
-          </h1>
-
-          {currentUser.is_officer && (
-            <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-slate-900 text-white shadow-xs">
-              BPH / OFFICER
+    <div id="dashboard-view-root" className="max-w-2xl mx-auto space-y-6 pb-36 font-sans">
+      {/* 1. HEADER ATAS (AVATAR, GREETING & SEARCH BUTTON) */}
+      <div className="flex items-center justify-between pt-2">
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <img
+              src={currentUser.avatar}
+              alt={currentUser.name}
+              className="w-12 h-12 rounded-full object-cover ring-4 ring-purple-100 shadow-xs"
+            />
+            <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 rounded-full ring-2 ring-white" />
+          </div>
+          <div>
+            <span className="text-[11px] font-bold text-slate-400 block leading-tight">
+              Today 18 Sep.
             </span>
-          )}
+            <h2 className="text-xl font-black text-slate-900 tracking-tight">
+              Hello, {currentUser.nickname}!
+            </h2>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setIsAnnouncementOpen(true)}
+            className="p-2.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all relative"
+            title="Pengumuman Angkatan"
+          >
+            <Bell size={18} />
+            <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-rose-500 rounded-full ring-2 ring-white animate-pulse" />
+          </button>
+          <button
+            type="button"
+            onClick={() => onNavigateToTab('terrafinder')}
+            className="p-2.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all"
+            title="Cari Mahasiswa"
+          >
+            <Search size={18} />
+          </button>
         </div>
       </div>
 
-      {/* 3. TERRAQUIZ KPI SCORE CARD (STYLE VISILY 100%) */}
-      <section className="relative overflow-hidden bg-[#F2F3FF] rounded-3xl p-6 border border-indigo-100/60 shadow-xs flex items-start justify-between gap-4">
-        <div className="space-y-2 max-w-[240px]">
-          <h2 className="text-base font-extrabold text-slate-900 tracking-tight">
-            Terraquiz KPI
-          </h2>
-          <p className="text-xs text-slate-600 leading-relaxed font-medium">
-            Berdasarkan tracker hafalan angkatan, skor kamu adalah <span className="font-bold text-slate-900">{kpiPercentage}%</span> dan dianggap baik.
-          </p>
-          <button
-            type="button"
-            onClick={() => onNavigateTab('terraquiz')}
-            className="text-xs font-black text-indigo-600 hover:underline inline-flex items-center gap-1 pt-1"
-          >
-            <span>Tell me more</span>
-            <ChevronRight size={13} />
-          </button>
-        </div>
+      {/* 2. HERO BANNER UNGU (DAILY CHALLENGE / TERRAQUIZ KPI) */}
+      <div className="relative bg-[#A088F2] rounded-[32px] p-6 text-white shadow-xl shadow-purple-200/50 overflow-hidden">
+        {/* Animated 3D Soft Clay Spheres SVG */}
+        <motion.div
+          animate={{
+            y: [0, -10, 0],
+            rotate: [0, 5, 0],
+          }}
+          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+          className="absolute -right-6 -bottom-6 w-36 h-36 pointer-events-none opacity-90"
+        >
+          <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <radialGradient id="claySphere1" cx="35%" cy="35%" r="65%">
+                <stop offset="0%" stopColor="#FFF2A1" />
+                <stop offset="40%" stopColor="#F5A0D9" />
+                <stop offset="100%" stopColor="#8054D6" />
+              </radialGradient>
+            </defs>
+            <circle cx="100" cy="100" r="80" fill="url(#claySphere1)" />
+          </svg>
+        </motion.div>
 
-        <div className="w-16 h-20 bg-rose-400 text-white rounded-2xl rounded-b-3xl flex flex-col items-center justify-center shadow-md shrink-0 font-black text-2xl">
-          {kpiPercentage}
-        </div>
-      </section>
-
-      {/* 4. HIGHLIGHTS GRID 2x2 (PRESET WARNA VISILY) */}
-      <section className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-base font-black text-slate-900">Highlights</h2>
-          <button
-            type="button"
-            onClick={() => setIsDetailAnnouncementOpen(true)}
-            className="text-xs font-bold text-slate-400 hover:text-slate-900 flex items-center gap-0.5"
-          >
-            <span>View more</span>
-            <ChevronRight size={13} />
-          </button>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3.5">
-          {/* CARD 1: PENGUMUMAN URGENT */}
-          <div
-            onClick={() => setIsDetailAnnouncementOpen(true)}
-            className="bg-[#7A82FC] text-white rounded-3xl p-4 flex flex-col justify-between min-h-[140px] shadow-sm cursor-pointer hover:opacity-95 transition-opacity relative group"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-indigo-100">
-                Pengumuman
-              </span>
-              <AlertTriangle size={24} className="text-white/80" />
-            </div>
-            <div>
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-indigo-200 block">Urgent Forum</span>
-                {currentUser.is_officer && onEditAnnouncement && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onEditAnnouncement();
-                    }}
-                    className="p-1 rounded bg-white/20 hover:bg-white/30 text-white transition-colors"
-                    title="Edit Pengumuman"
-                  >
-                    <Edit3 size={11} />
-                  </button>
-                )}
-              </div>
-              <h3 className="text-sm font-black text-white leading-tight mt-0.5 line-clamp-2">
-                {announcement.title}
-              </h3>
-              <span className="text-[10px] font-semibold text-indigo-100 mt-2 block">
-                Sidang: {timeLeft.days}d {timeLeft.hours}h
-              </span>
-            </div>
-          </div>
-
-          {/* CARD 2: AGENDA UTAMA */}
-          <div
-            onClick={() => onNavigateTab('terrafinder')}
-            className="bg-[#FFAA7A] text-white rounded-3xl p-4 flex flex-col justify-between min-h-[140px] shadow-sm cursor-pointer hover:opacity-95 transition-opacity"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-orange-100">
-                Agenda Utama
-              </span>
-              <Calendar size={24} className="text-white/80" />
-            </div>
-            <div>
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-orange-100 block">
-                  {agendas[0]?.date || 'Mendatang'}
-                </span>
-                {currentUser.is_officer && onEditAgenda && agendas[0] && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onEditAgenda(agendas[0]);
-                    }}
-                    className="p-1 rounded bg-white/20 hover:bg-white/30 text-white transition-colors"
-                    title="Edit Agenda"
-                  >
-                    <Edit3 size={11} />
-                  </button>
-                )}
-              </div>
-              <h3 className="text-sm font-black text-white leading-tight mt-0.5 line-clamp-2">
-                {agendas[0]?.title || 'Tidak ada agenda'}
-              </h3>
-              <span className="text-[10px] font-semibold text-orange-100 mt-2 block">
-                {agendas[0]?.time || '-'}
-              </span>
-            </div>
-          </div>
-
-          {/* CARD 3: TOP HAFALAN */}
-          <div
-            onClick={() => onNavigateTab('terraquiz')}
-            className="bg-[#007EA7] text-white rounded-3xl p-4 flex flex-col justify-between min-h-[140px] shadow-sm cursor-pointer hover:opacity-95 transition-opacity"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-cyan-100">
-                Leaderboard
-              </span>
-              <Trophy size={24} className="text-white/80" />
-            </div>
-            <div>
-              <span className="text-[10px] font-bold text-cyan-200 block">Rank #1 Hafalan</span>
-              <h3 className="text-sm font-black text-white leading-tight mt-0.5 truncate">
-                {leaderboard[0]?.name || '-'}
-              </h3>
-              <span className="text-[10px] font-semibold text-cyan-100 mt-2 block">
-                {leaderboard[0]?.masteredCount} Anak Dikuasai
-              </span>
-            </div>
-          </div>
-
-          {/* CARD 4: DIREKTORI MAHASISWA */}
-          <div
-            onClick={() => onNavigateTab('terrafinder')}
-            className="bg-[#5C428E] text-white rounded-3xl p-4 flex flex-col justify-between min-h-[140px] shadow-sm cursor-pointer hover:opacity-95 transition-opacity"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-purple-200">
-                Direktori
-              </span>
-              <Users size={24} className="text-white/80" />
-            </div>
-            <div>
-              <span className="text-[10px] font-bold text-purple-200 block">Angkatan 2026</span>
-              <h3 className="text-sm font-black text-white leading-tight mt-0.5">
-                170 Mahasiswa
-              </h3>
-              <span className="text-[10px] font-semibold text-purple-200 mt-2 block">
-                Cari Kontak & Kos &gt;
-              </span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* MODAL DETAIL PENGUMUMAN */}
-      {isDetailAnnouncementOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="relative w-full max-w-md bg-white rounded-3xl border border-black/[0.08] shadow-2xl p-6 space-y-4">
-            <button
-              type="button"
-              onClick={() => setIsDetailAnnouncementOpen(false)}
-              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center"
-            >
-              <X size={16} />
-            </button>
-
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-rose-600 text-white">
-                PENGUMUMAN URGENT
-              </span>
-              <span className="text-xs font-bold text-slate-400">{announcement.category}</span>
-            </div>
-
-            <h3 className="text-lg font-black text-slate-900 leading-snug">
-              {announcement.title}
+        <div className="relative z-10 space-y-4">
+          <div>
+            <h3 className="text-2xl font-black tracking-tight leading-tight">
+              Daily Challenge
             </h3>
+            <p className="text-xs font-semibold text-purple-100/90 mt-1">
+              Target hafalan angkatan Terravana 2026 ({kpiPercentage}% Tuntas)
+            </p>
+          </div>
 
-            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-xs text-slate-600 leading-relaxed whitespace-pre-line">
-              {announcement.description}
+          {/* Stack Avatar Pendaftar / Mastered */}
+          <div className="flex items-center gap-3 pt-2">
+            <div className="flex -space-x-2.5 overflow-hidden">
+              {topMasteredStudents.length > 0
+                ? topMasteredStudents.map((st) => (
+                    <img
+                      key={st.id}
+                      src={st.avatar}
+                      alt={st.name}
+                      className="inline-block h-8 w-8 rounded-full ring-2 ring-[#A088F2] object-cover"
+                    />
+                  ))
+                : students.slice(0, 4).map((st) => (
+                    <img
+                      key={st.id}
+                      src={st.avatar}
+                      alt={st.name}
+                      className="inline-block h-8 w-8 rounded-full ring-2 ring-[#A088F2] object-cover"
+                    />
+                  ))}
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-[10px] font-black text-white ring-2 ring-[#A088F2]">
+                +{totalStudents - 4}
+              </div>
             </div>
 
-            <div className="pt-2 flex items-center justify-between text-xs text-slate-400 font-medium">
-              <span>Diposting BPH Angkatan</span>
-              <span>{announcement.date}</span>
+            <button
+              type="button"
+              onClick={() => onNavigateToTab('terraquiz')}
+              className="px-4 py-2 rounded-2xl bg-white text-slate-900 text-xs font-black hover:bg-slate-100 transition-all shadow-xs flex items-center gap-1.5"
+            >
+              <span>Mainkan Kuis</span>
+              <ChevronRight size={14} />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. HORIZONTAL DATE STRIP (WEEKLY) */}
+      <div className="flex items-center justify-between gap-2 px-1">
+        {weekDays.map((item) => (
+          <div
+            key={item.date}
+            className={`flex-1 flex flex-col items-center py-2.5 rounded-2xl transition-all ${
+              item.active
+                ? 'bg-slate-900 text-white shadow-md scale-105 font-bold'
+                : 'bg-white text-slate-500 hover:bg-slate-50 border border-slate-100'
+            }`}
+          >
+            <span className="text-[10px] font-bold uppercase tracking-wider opacity-80">
+              {item.day}
+            </span>
+            <span className="text-sm font-black mt-0.5">{item.date}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* 4. ASYMMETRIC GRID CARDS (YOUR PLAN / HIGHLIGHTS) */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between px-1">
+          <h3 className="text-lg font-black text-slate-900 tracking-tight">
+            Your plan
+          </h3>
+          <button
+            type="button"
+            onClick={() => setIsAnnouncementOpen(true)}
+            className="text-xs font-bold text-slate-400 hover:text-slate-800 transition-colors"
+          >
+            See all
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* KARTU KUNING PASTEL (AGENDA UTAMA) */}
+          <div className="relative bg-[#FFDA66] rounded-[32px] p-5 text-slate-900 shadow-lg shadow-amber-200/40 flex flex-col justify-between space-y-4 overflow-hidden">
+            {/* Animated Soft Clay Gem SVG */}
+            <motion.div
+              animate={{
+                rotate: [0, 15, -15, 0],
+                scale: [1, 1.05, 1],
+              }}
+              transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
+              className="absolute -right-4 -bottom-4 w-28 h-28 pointer-events-none opacity-80"
+            >
+              <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <radialGradient id="clayGold" cx="30%" cy="30%" r="70%">
+                    <stop offset="0%" stopColor="#FFFFFF" />
+                    <stop offset="50%" stopColor="#FFC837" />
+                    <stop offset="100%" stopColor="#E08200" />
+                  </radialGradient>
+                </defs>
+                <rect x="30" y="30" width="140" height="140" rx="40" fill="url(#clayGold)" />
+              </svg>
+            </motion.div>
+
+            <div className="relative z-10 space-y-3">
+              <span className="inline-block px-3 py-1 rounded-full bg-white/80 text-[10px] font-extrabold text-amber-900">
+                Wajib Angkatan
+              </span>
+
+              <div>
+                <h4 className="text-xl font-black leading-tight">
+                  Sidang Pleno Terravana 2026
+                </h4>
+                <div className="mt-2 space-y-1 text-xs font-bold text-amber-950/80">
+                  <div className="flex items-center gap-1.5">
+                    <CalendarIcon size={13} />
+                    <span>25 Nov. 2026</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Clock size={13} />
+                    <span>14:00 - 15:00</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <MapPin size={13} />
+                    <span>Auditorium ITS</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="relative z-10 pt-2 flex items-center gap-2 border-t border-amber-900/10">
+              <div className="w-7 h-7 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-black">
+                T
+              </div>
+              <div>
+                <span className="text-[10px] font-bold text-amber-900/70 block">Panitia</span>
+                <span className="text-xs font-extrabold text-slate-900">BPH Terravana</span>
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT COLUMN: KARTU BIRU & PINK PASTEL */}
+          <div className="space-y-4 flex flex-col justify-between">
+            {/* KARTU BIRU MUDA (BALANCE / STATS) */}
+            <div className="relative bg-[#D0E5FF] rounded-[32px] p-5 text-slate-900 shadow-lg shadow-blue-100/50 flex-1 flex flex-col justify-between space-y-3 overflow-hidden">
+              {/* Animated Floating Sphere */}
+              <motion.div
+                animate={{
+                  y: [0, -8, 0],
+                }}
+                transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+                className="absolute -right-5 -bottom-5 w-24 h-24 pointer-events-none opacity-80"
+              >
+                <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <radialGradient id="clayBlue" cx="30%" cy="30%" r="70%">
+                      <stop offset="0%" stopColor="#FFFFFF" />
+                      <stop offset="50%" stopColor="#7ABCFF" />
+                      <stop offset="100%" stopColor="#3B82F6" />
+                    </radialGradient>
+                  </defs>
+                  <circle cx="100" cy="100" r="75" fill="url(#clayBlue)" />
+                </svg>
+              </motion.div>
+
+              <div className="relative z-10 space-y-2">
+                <span className="inline-block px-3 py-1 rounded-full bg-white/80 text-[10px] font-extrabold text-blue-900">
+                  Stats Hafalan
+                </span>
+
+                <div>
+                  <h4 className="text-lg font-black leading-tight">
+                    Progress Angkatan
+                  </h4>
+                  <p className="text-xs font-bold text-blue-950/70 mt-1">
+                    {masteredCount} dari {totalStudents} Mahasiswa Telah Dikuasai
+                  </p>
+                </div>
+              </div>
+
+              <div className="relative z-10 pt-1">
+                <button
+                  type="button"
+                  onClick={() => onNavigateToTab('terraquiz')}
+                  className="w-full py-2 rounded-2xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-colors shadow-xs"
+                >
+                  Uji Hafalan
+                </button>
+              </div>
+            </div>
+
+            {/* KARTU PINK PASTEL (FOLLOW US / MEDIA SOSIAL) */}
+            <div className="bg-[#F5C7F7] rounded-[32px] p-4 text-slate-900 shadow-lg shadow-pink-100/50 flex items-center justify-between gap-3">
+              <div>
+                <span className="text-xs font-black block">Follow us</span>
+                <span className="text-[10px] font-bold text-pink-950/70">Medsos Terravana 2026</span>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <a
+                  href="https://instagram.com"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-8 h-8 rounded-full bg-white text-pink-600 flex items-center justify-center hover:scale-105 transition-all shadow-xs"
+                >
+                  <Instagram size={16} />
+                </a>
+                <a
+                  href="https://youtube.com"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-8 h-8 rounded-full bg-white text-rose-600 flex items-center justify-center hover:scale-105 transition-all shadow-xs"
+                >
+                  <Youtube size={16} />
+                </a>
+                <a
+                  href="https://telegram.org"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-8 h-8 rounded-full bg-white text-sky-600 flex items-center justify-center hover:scale-105 transition-all shadow-xs"
+                >
+                  <Send size={15} />
+                </a>
+              </div>
             </div>
           </div>
         </div>
-      )}
+      </div>
 
-      {/* MODAL AUTH PIN BPH */}
-      {isAuthModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="relative w-full max-w-xs bg-white rounded-3xl border border-black/[0.08] shadow-2xl p-6 text-center">
-            <button
-              type="button"
-              onClick={() => {
-                setIsAuthModalOpen(false);
-                setPin('');
-                setPinError(false);
-              }}
-              className="absolute top-4 right-4 w-7 h-7 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center"
+      {/* MODAL PENGUMUMAN URGENT BPH */}
+      <AnimatePresence>
+        {isAnnouncementOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-md bg-white rounded-[32px] p-6 shadow-2xl border border-slate-100 space-y-4"
             >
-              <X size={16} />
-            </button>
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center">
+                    <Megaphone size={18} />
+                  </div>
+                  <h3 className="text-base font-extrabold text-slate-900">
+                    Pengumuman Urgent BPH
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsAnnouncementOpen(false)}
+                  className="p-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500"
+                >
+                  <X size={16} />
+                </button>
+              </div>
 
-            <div className="w-12 h-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center mx-auto mb-3">
-              <ShieldCheck size={24} />
-            </div>
-
-            <h3 className="text-sm font-bold text-slate-900">Akses Officer BPH</h3>
-            <p className="text-xs text-slate-500 mt-1">Masukkan 4 digit PIN rahasia (2026).</p>
-
-            <form onSubmit={handleVerifyPin} className="mt-4 space-y-3">
-              <input
-                type="password"
-                maxLength={4}
-                autoFocus
-                placeholder="••••"
-                value={pin}
-                onChange={(e) => {
-                  setPin(e.target.value);
-                  setPinError(false);
-                }}
-                className="w-full text-center text-xl tracking-[0.5em] font-mono py-2 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:border-slate-900"
-              />
-
-              {pinError && <p className="text-[11px] font-bold text-rose-600">Kode PIN salah!</p>}
+              <div className="space-y-3 text-xs text-slate-700 font-medium leading-relaxed">
+                <p className="bg-amber-50/80 p-3.5 rounded-2xl border border-amber-200/80 text-amber-950 font-bold">
+                  ⚠️ Pengumpulan Berkas Kelompok Terravana paling lambat diserahkan tanggal 25 November 2026 pukul 23.59 WIB melalui Penanggung Jawab masing-masing.
+                </p>
+                <p className="text-slate-500">
+                  Pastikan seluruh anggota kelompok sudah menyelesaikan pendaftaran ulang di direktori Terrafinder agar tidak terkendala administrasi.
+                </p>
+              </div>
 
               <button
-                type="submit"
-                disabled={pin.length !== 4}
-                className="w-full py-2.5 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 disabled:bg-slate-100 disabled:text-slate-400"
+                type="button"
+                onClick={() => setIsAnnouncementOpen(false)}
+                className="w-full py-2.5 rounded-2xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-colors shadow-xs"
               >
-                Verifikasi
+                Saya Mengerti
               </button>
-            </form>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
     </div>
   );
 };
