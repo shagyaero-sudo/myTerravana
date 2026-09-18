@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  Search,
   Bell,
-  Calendar as CalendarIcon,
+  Search,
+  Calendar,
   Clock,
   MapPin,
   ChevronRight,
@@ -12,17 +12,45 @@ import {
   Send,
   Megaphone,
   X,
-  ExternalLink,
+  Edit3,
+  Sun,
+  ShieldCheck,
+  Award,
+  AlertTriangle,
+  Trophy,
+  Users,
 } from 'lucide-react';
 import { StudentUser } from '../types';
+
+export interface AnnouncementData {
+  title: string;
+  content: string;
+  date: string;
+  author: string;
+}
+
+export interface AgendaData {
+  id: string;
+  title: string;
+  date: string;
+  time: string;
+  location: string;
+  organizer: string;
+  tag: string;
+}
 
 interface DashboardViewProps {
   currentUser: StudentUser;
   students: StudentUser[];
   masteredCount: number;
   totalStudents: number;
-  onNavigateToTab: (tabId: string) => void;
+  announcement: AnnouncementData;
+  agendas: AgendaData[];
+  onNavigateTab: (tabId: string) => void;
   onSelectStudent: (student: StudentUser) => void;
+  onToggleOfficerMode?: () => void;
+  onEditAnnouncement?: () => void;
+  onEditAgenda?: (agenda: AgendaData) => void;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
@@ -30,11 +58,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   students,
   masteredCount,
   totalStudents,
-  onNavigateToTab,
+  announcement,
+  agendas,
+  onNavigateTab,
   onSelectStudent,
+  onToggleOfficerMode,
+  onEditAnnouncement,
+  onEditAgenda,
 }) => {
-  const [isAnnouncementOpen, setIsAnnouncementOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState('25'); // Active Date State
+  const [isDetailAnnouncementOpen, setIsDetailAnnouncementOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState('25');
 
   const kpiPercentage = Math.round((masteredCount / totalStudents) * 100);
   const topMasteredStudents = students.filter((s) => s.mastered).slice(0, 4);
@@ -50,32 +83,44 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   ];
 
   return (
-    <div id="dashboard-view-root" className="max-w-2xl mx-auto space-y-6 pb-36 font-sans">
-      {/* 1. HEADER ATAS */}
-      <div className="flex items-center justify-between pt-2">
+    <div id="dashboard-view-root" className="max-w-2xl mx-auto space-y-6 pt-2 pb-36 font-sans">
+      {/* 1. TOP BAR: LOGO ANGKATAN & AVATAR PROFIL + BPH TOGGLE */}
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="relative cursor-pointer" onClick={() => onSelectStudent(currentUser)}>
+          <div className="w-10 h-10 shrink-0">
             <img
-              src={currentUser.avatar}
-              alt={currentUser.name}
-              className="w-12 h-12 rounded-full object-cover ring-4 ring-purple-100 shadow-xs hover:opacity-90 transition-opacity"
+              src="/logoterravana.png"
+              alt="Terravana Phoenix Logo"
+              className="w-full h-full object-contain drop-shadow-xs"
             />
-            <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 rounded-full ring-2 ring-white" />
           </div>
           <div>
-            <span className="text-[11px] font-bold text-slate-400 block leading-tight">
-              Today 18 Sep.
-            </span>
-            <h2 className="text-xl font-black text-slate-900 tracking-tight">
-              Hello, {currentUser.nickname}!
-            </h2>
+            <div className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-slate-400 leading-none">
+              <Sun size={12} className="text-amber-500" />
+              <span>Overview</span>
+            </div>
+            <h1
+              onClick={onToggleOfficerMode}
+              className="text-lg font-black tracking-tight text-slate-900 cursor-pointer hover:text-indigo-600 transition-colors flex items-center gap-1.5"
+              title={currentUser.is_officer ? 'Mode BPH Aktif (Klik untuk matikan)' : 'Klik untuk masuk mode BPH'}
+            >
+              <span>Halo, {currentUser.nickname}! 👋</span>
+              {currentUser.is_officer && (
+                <ShieldCheck size={16} className="text-indigo-600 inline-block" />
+              )}
+            </h1>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
+          {currentUser.is_officer && (
+            <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-slate-900 text-white shadow-xs">
+              BPH / OFFICER
+            </span>
+          )}
           <button
             type="button"
-            onClick={() => setIsAnnouncementOpen(true)}
+            onClick={() => setIsDetailAnnouncementOpen(true)}
             className="p-2.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all relative"
             title="Pengumuman Angkatan"
           >
@@ -84,7 +129,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </button>
           <button
             type="button"
-            onClick={() => onNavigateToTab('terrafinder')}
+            onClick={() => onNavigateTab('terrafinder')}
             className="p-2.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all"
             title="Cari Mahasiswa"
           >
@@ -93,10 +138,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
       </div>
 
-      {/* 2. HERO BANNER UNGU (DAILY CHALLENGE) */}
-      <div 
-        onClick={() => onNavigateToTab('terraquiz')}
-        className="relative bg-[#A088F2] rounded-[32px] p-6 text-white shadow-xl shadow-purple-200/50 overflow-hidden cursor-pointer group transition-all hover:scale-[1.01]"
+      {/* 2. HERO BANNER UNGU (DAILY CHALLENGE / TERRAQUIZ KPI) */}
+      <div
+        onClick={() => onNavigateTab('terraquiz')}
+        className="relative bg-[#A088F2] rounded-[32px] p-6 text-white shadow-xl shadow-purple-200/50 overflow-hidden cursor-pointer group transition-all hover:scale-[1.005]"
       >
         {/* Animated Soft Clay Spheres SVG */}
         <motion.div
@@ -157,10 +202,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       className="inline-block h-8 w-8 rounded-full ring-2 ring-[#A088F2] object-cover hover:scale-110 transition-transform"
                     />
                   ))}
-              <div 
+              <div
                 onClick={(e) => {
                   e.stopPropagation();
-                  onNavigateToTab('terrafinder');
+                  onNavigateTab('terrafinder');
                 }}
                 className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-[10px] font-black text-white ring-2 ring-[#A088F2] hover:bg-slate-800"
               >
@@ -172,7 +217,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                onNavigateToTab('terraquiz');
+                onNavigateTab('terraquiz');
               }}
               className="px-4 py-2 rounded-2xl bg-white text-slate-900 text-xs font-black hover:bg-slate-100 transition-all shadow-xs flex items-center gap-1.5 group-hover:translate-x-1"
             >
@@ -207,7 +252,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         })}
       </div>
 
-      {/* 4. ASYMMETRIC GRID CARDS */}
+      {/* 4. ASYMMETRIC GRID CARDS (YOUR PLAN / HIGHLIGHTS) */}
       <div className="space-y-3">
         <div className="flex items-center justify-between px-1">
           <h3 className="text-lg font-black text-slate-900 tracking-tight">
@@ -215,7 +260,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </h3>
           <button
             type="button"
-            onClick={() => setIsAnnouncementOpen(true)}
+            onClick={() => setIsDetailAnnouncementOpen(true)}
             className="text-xs font-bold text-slate-400 hover:text-slate-800 transition-colors"
           >
             See all
@@ -223,9 +268,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* KARTU KUNING PASTEL (AGENDA UTAMA) */}
-          <div 
-            onClick={() => setIsAnnouncementOpen(true)}
+          {/* KARTU KUNING PASTEL (AGENDA UTAMA TERDEKAT) */}
+          <div
+            onClick={() => onNavigateTab('terrafinder')}
             className="relative bg-[#FFDA66] rounded-[32px] p-5 text-slate-900 shadow-lg shadow-amber-200/40 flex flex-col justify-between space-y-4 overflow-hidden cursor-pointer hover:scale-[1.01] transition-transform"
           >
             {/* Animated Soft Clay Gem SVG */}
@@ -250,53 +295,62 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </motion.div>
 
             <div className="relative z-10 space-y-3">
-              <span className="inline-block px-3 py-1 rounded-full bg-white/80 text-[10px] font-extrabold text-amber-900">
-                Wajib Angkatan
-              </span>
+              <div className="flex items-center justify-between">
+                <span className="inline-block px-3 py-1 rounded-full bg-white/80 text-[10px] font-extrabold text-amber-900">
+                  {agendas[0]?.tag || 'Wajib Angkatan'}
+                </span>
+                {currentUser.is_officer && onEditAgenda && agendas[0] && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEditAgenda(agendas[0]);
+                    }}
+                    className="p-1 rounded-full bg-white/80 hover:bg-white text-slate-800 transition-colors"
+                    title="Edit Agenda"
+                  >
+                    <Edit3 size={12} />
+                  </button>
+                )}
+              </div>
 
               <div>
                 <h4 className="text-xl font-black leading-tight">
-                  Sidang Pleno Terravana 2026
+                  {agendas[0]?.title || 'Sidang Pleno Terravana 2026'}
                 </h4>
                 <div className="mt-2 space-y-1 text-xs font-bold text-amber-950/80">
                   <div className="flex items-center gap-1.5">
-                    <CalendarIcon size={13} />
-                    <span>25 Nov. 2026</span>
+                    <Calendar size={13} />
+                    <span>{agendas[0]?.date || '25 Nov. 2026'}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Clock size={13} />
-                    <span>14:00 - 15:00</span>
+                    <span>{agendas[0]?.time || '14:00 - 15:00'}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <MapPin size={13} />
-                    <span>Auditorium ITS</span>
+                    <span>{agendas[0]?.location || 'Auditorium ITS'}</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="relative z-10 pt-2 flex items-center justify-between border-t border-amber-900/10">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-black">
-                  T
-                </div>
-                <div>
-                  <span className="text-[10px] font-bold text-amber-900/70 block leading-tight">Panitia</span>
-                  <span className="text-xs font-extrabold text-slate-900">BPH Terravana</span>
-                </div>
+            <div className="relative z-10 pt-2 flex items-center gap-2 border-t border-amber-900/10">
+              <div className="w-7 h-7 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-black">
+                T
               </div>
-
-              <span className="text-amber-900/80 hover:text-amber-950 font-bold text-xs flex items-center gap-0.5">
-                Detail <ExternalLink size={12} />
-              </span>
+              <div>
+                <span className="text-[10px] font-bold text-amber-900/70 block leading-tight">Panitia</span>
+                <span className="text-xs font-extrabold text-slate-900">{agendas[0]?.organizer || 'BPH Terravana'}</span>
+              </div>
             </div>
           </div>
 
           {/* RIGHT COLUMN */}
           <div className="space-y-4 flex flex-col justify-between">
             {/* KARTU BIRU MUDA (BALANCE / STATS) */}
-            <div 
-              onClick={() => onNavigateToTab('terraquiz')}
+            <div
+              onClick={() => onNavigateTab('terraquiz')}
               className="relative bg-[#D0E5FF] rounded-[32px] p-5 text-slate-900 shadow-lg shadow-blue-100/50 flex-1 flex flex-col justify-between space-y-3 overflow-hidden cursor-pointer hover:scale-[1.01] transition-transform"
             >
               {/* Animated Floating Sphere */}
@@ -339,7 +393,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    onNavigateToTab('terraquiz');
+                    onNavigateTab('terraquiz');
                   }}
                   className="w-full py-2 rounded-2xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-colors shadow-xs"
                 >
@@ -386,9 +440,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
       </div>
 
-      {/* MODAL PENGUMUMAN URGENT BPH */}
+      {/* MODAL DETAIL PENGUMUMAN FULL */}
       <AnimatePresence>
-        {isAnnouncementOpen && (
+        {isDetailAnnouncementOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
@@ -401,34 +455,52 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center">
                     <Megaphone size={18} />
                   </div>
-                  <h3 className="text-base font-extrabold text-slate-900">
-                    Pengumuman Urgent BPH
-                  </h3>
+                  <div>
+                    <h3 className="text-base font-extrabold text-slate-900">
+                      {announcement.title}
+                    </h3>
+                    <span className="text-[10px] text-slate-400 font-bold">
+                      {announcement.date} • Oleh {announcement.author}
+                    </span>
+                  </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setIsAnnouncementOpen(false)}
-                  className="p-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500"
-                >
-                  <X size={16} />
-                </button>
+
+                <div className="flex items-center gap-1">
+                  {currentUser.is_officer && onEditAnnouncement && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsDetailAnnouncementOpen(false);
+                        onEditAnnouncement();
+                      }}
+                      className="p-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
+                      title="Edit Pengumuman"
+                    >
+                      <Edit3 size={15} />
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setIsDetailAnnouncementOpen(false)}
+                    className="p-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
               </div>
 
               <div className="space-y-3 text-xs text-slate-700 font-medium leading-relaxed">
-                <p className="bg-amber-50/80 p-3.5 rounded-2xl border border-amber-200/80 text-amber-950 font-bold">
-                  ⚠️ Pengumpulan Berkas Kelompok Terravana paling lambat diserahkan tanggal 25 November 2026 pukul 23.59 WIB melalui Penanggung Jawab masing-masing.
-                </p>
-                <p className="text-slate-500">
-                  Pastikan seluruh anggota kelompok sudah menyelesaikan pendaftaran ulang di direktori Terrafinder agar tidak terkendala administrasi.
+                <p className="bg-amber-50/80 p-3.5 rounded-2xl border border-amber-200/80 text-amber-950 font-bold whitespace-pre-line">
+                  {announcement.content}
                 </p>
               </div>
 
               <button
                 type="button"
-                onClick={() => setIsAnnouncementOpen(false)}
+                onClick={() => setIsDetailAnnouncementOpen(false)}
                 className="w-full py-2.5 rounded-2xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-colors shadow-xs"
               >
-                Saya Mengerti
+                Tutup Pengumuman
               </button>
             </motion.div>
           </div>
