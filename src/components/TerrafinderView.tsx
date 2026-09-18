@@ -8,7 +8,7 @@ import {
   List,
   CheckCircle2,
   ChevronDown,
-  Navigation,
+  Compass,
 } from 'lucide-react';
 import { StudentUser, RegionType } from '../types';
 
@@ -38,7 +38,7 @@ export const TerrafinderView: React.FC<TerrafinderViewProps> = ({
   const [selectedRegion, setSelectedRegion] = useState<RegionType>('All');
   const [selectedKelompok, setSelectedKelompok] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  
+
   // Custom Dropdown State
   const [isKelompokDropdownOpen, setIsKelompokDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -83,7 +83,7 @@ export const TerrafinderView: React.FC<TerrafinderViewProps> = ({
 
   return (
     <div id="terrafinder-view-root" className="max-w-2xl mx-auto space-y-5 pb-36 font-sans">
-      {/* 1. HEADER (BERSIH & PRESISI) */}
+      {/* 1. HEADER */}
       <div className="flex items-center justify-between pt-1">
         <div>
           <h2 className="text-2xl font-black tracking-tight text-slate-900">
@@ -142,7 +142,7 @@ export const TerrafinderView: React.FC<TerrafinderViewProps> = ({
             />
           </div>
 
-          {/* CUSTOM DROPDOWN KELOMPOK MYTERRAVANA (NON-NATIVE BROWSER) */}
+          {/* CUSTOM DROPDOWN KELOMPOK MYTERRAVANA */}
           <div className="relative" ref={dropdownRef}>
             <button
               type="button"
@@ -252,7 +252,7 @@ export const TerrafinderView: React.FC<TerrafinderViewProps> = ({
           </p>
         </div>
       ) : viewMode === 'grid' ? (
-        /* GRID VIEW (VISILY CARDS) */
+        /* GRID VIEW (ALAMAT & WILAYAH SATU BARIS FLEX-ROW) */
         <div
           id="student-cards-grid"
           className="grid grid-cols-1 sm:grid-cols-2 gap-3.5"
@@ -269,7 +269,7 @@ export const TerrafinderView: React.FC<TerrafinderViewProps> = ({
               <div
                 key={student.id}
                 id={`student-card-${student.id}`}
-                className="bg-white rounded-3xl border border-slate-100/90 p-4 shadow-xs hover:border-slate-300 transition-all flex flex-col justify-between space-y-3"
+                className="bg-white rounded-3xl border border-slate-100/90 p-4 shadow-xs hover:border-slate-300 transition-all flex flex-col justify-between space-y-2.5"
               >
                 <div>
                   {/* Avatar & Info Utama */}
@@ -316,31 +316,28 @@ export const TerrafinderView: React.FC<TerrafinderViewProps> = ({
                     </span>
                   </div>
 
-                  {/* Alamat & Domisili (Tanpa Jurusan, Sejajar Rapi) */}
-                  <div className="mt-3 space-y-2 text-xs text-slate-600 bg-slate-50 rounded-2xl p-3 border border-slate-100">
-                    <div className="flex items-start gap-1.5">
-                      <MapPin size={13} className="text-slate-400 shrink-0 mt-0.5" />
-                      <span className="line-clamp-2 text-[11px] font-medium leading-snug">
+                  {/* Alamat & Domisili (SATU BARIS RAPI) */}
+                  <div className="mt-2.5 bg-slate-50 rounded-2xl px-3 py-2 border border-slate-100/80 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                      <MapPin size={12} className="text-slate-400 shrink-0" />
+                      <span className="text-[10px] font-medium text-slate-600 truncate leading-none">
                         {student.kos_address}
                       </span>
                     </div>
-
-                    <div className="flex items-center justify-end pt-1 border-t border-slate-200/50">
-                      <span className="px-2.5 py-0.5 rounded-lg bg-white text-slate-700 font-bold border border-slate-200/80 text-[10px]">
-                        {student.region}
-                      </span>
-                    </div>
+                    <span className="px-2 py-0.5 rounded-md bg-white text-slate-600 font-bold border border-slate-200/60 text-[9px] shrink-0 leading-none">
+                      {student.region}
+                    </span>
                   </div>
                 </div>
 
-                {/* Direct Action Buttons (WA, Google Maps & Detail) */}
+                {/* Direct Action Buttons (WA, MAPS, DETAIL) */}
                 <div className="pt-1 flex items-center gap-2">
                   <a
                     id={`btn-wa-${student.id}`}
                     href={waUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-2xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 transition-colors shadow-xs"
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-2xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 transition-colors shadow-xs"
                   >
                     <MessageCircle size={14} />
                     <span>Chat WA</span>
@@ -350,10 +347,11 @@ export const TerrafinderView: React.FC<TerrafinderViewProps> = ({
                     href={mapsUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-2 rounded-2xl text-slate-600 bg-slate-100 hover:bg-slate-200 hover:text-slate-900 transition-colors"
+                    className="inline-flex items-center justify-center gap-1 py-2 px-3 rounded-2xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 transition-colors shadow-xs"
                     title="Buka Lokasi di Google Maps"
                   >
-                    <Navigation size={15} />
+                    <Compass size={14} />
+                    <span>Maps</span>
                   </a>
 
                   <button
@@ -386,9 +384,9 @@ export const TerrafinderView: React.FC<TerrafinderViewProps> = ({
               <div
                 key={student.id}
                 id={`student-list-item-${student.id}`}
-                className="p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/80 transition-colors"
+                className="p-3 sm:p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 hover:bg-slate-50/80 transition-colors"
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 min-w-0">
                   <img
                     src={student.avatar}
                     alt={student.name}
@@ -403,41 +401,40 @@ export const TerrafinderView: React.FC<TerrafinderViewProps> = ({
                       >
                         {student.name} ({student.nickname})
                       </h4>
-                      <span className="px-2 py-0.2 rounded-full text-[9px] font-black bg-slate-900 text-white">
+                      <span className="px-2 py-0.2 rounded-full text-[9px] font-black bg-slate-900 text-white shrink-0">
                         K-{student.kelompok}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2 mt-0.5 text-xs text-slate-400 font-medium">
+                    <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-slate-400 font-medium truncate">
                       <span>NRP {student.nrp}</span>
                       <span>•</span>
-                      <span className="truncate max-w-[180px] sm:max-w-xs">{student.kos_address}</span>
+                      <span className="truncate">{student.kos_address}</span>
+                      <span>•</span>
+                      <span className="text-slate-600 font-bold shrink-0">{student.region}</span>
                     </div>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-slate-100 text-slate-600 hidden md:inline-block">
-                    {student.region}
-                  </span>
-
                   <a
                     href={waUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors"
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors"
                   >
                     <MessageCircle size={13} />
-                    <span>Chat WA</span>
+                    <span>WA</span>
                   </a>
 
                   <a
                     href={mapsUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-1.5 rounded-xl text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
                     title="Google Maps"
                   >
-                    <Navigation size={13} />
+                    <Compass size={13} />
+                    <span>Maps</span>
                   </a>
 
                   <button
