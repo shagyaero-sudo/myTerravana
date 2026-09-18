@@ -14,7 +14,9 @@ import {
   Pencil,
   X,
   ShieldCheck,
-  TrendingUp,
+  Sun,
+  Flame,
+  ArrowRight,
 } from 'lucide-react';
 import {
   StudentUser,
@@ -97,247 +99,192 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const kpiPercentage = Math.round((masteredCount / totalStudents) * 100);
 
   return (
-    <div id="dashboard-view-root" className="space-y-5 pt-2 pb-36">
-      {/* 1. VISILY TOP BAR HEADER */}
+    <div id="dashboard-view-root" className="space-y-6 pt-2 pb-36 font-sans">
+      {/* 1. HEADER ATAS: LOGO ANGKATAN DI KIRI & AVATAR USER DI KANAN */}
       <div className="flex items-center justify-between">
-        <div
-          onClick={() => {
-            if (!currentUser.is_officer) {
-              setIsAuthModalOpen(true);
-            } else if (confirm('Matikan mode BPH / Officer?')) {
-              onToggleOfficerMode(false);
-            }
-          }}
-          className="cursor-pointer group"
-        >
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-black tracking-tight text-slate-900 group-hover:text-emerald-600 transition-colors">
-              Overview
-            </h1>
-            {currentUser.is_officer && (
-              <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-slate-900 text-white">
-                BPH
-              </span>
-            )}
-          </div>
+        <div className="w-10 h-10 rounded-2xl bg-slate-900 p-1.5 shadow-sm">
+          <img
+            src="/logoterravana.png"
+            alt="Terravana Phoenix Logo"
+            className="w-full h-full object-contain"
+          />
         </div>
 
-        {/* AVATAR USER & LOGO ANGKATAN PHOENIX (/public/logoterravana.png) */}
-        <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={onOpenProfile}
+          className="relative group shrink-0"
+          title="Klik untuk ubah profil"
+        >
+          <img
+            src={currentUser.avatar}
+            alt={currentUser.name}
+            className="w-11 h-11 rounded-full object-cover ring-2 ring-slate-100 group-hover:ring-slate-900 transition-all"
+          />
+          <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-slate-900 text-white flex items-center justify-center ring-2 ring-white">
+            <Pencil size={8} />
+          </span>
+        </button>
+      </div>
+
+      {/* TANGGAL & SUBTITLE OVERVIEW */}
+      <div className="space-y-1">
+        <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-400">
+          <Sun size={13} className="text-amber-500" />
+          <span>JUMAT, 18 SEP</span>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <h1
+            onClick={() => {
+              if (!currentUser.is_officer) {
+                setIsAuthModalOpen(true);
+              } else if (confirm('Matikan mode BPH / Officer?')) {
+                onToggleOfficerMode(false);
+              }
+            }}
+            className="text-3xl font-black tracking-tight text-slate-900 cursor-pointer hover:text-indigo-600 transition-colors"
+          >
+            Overview
+          </h1>
+
           <button
             type="button"
-            onClick={onOpenProfile}
-            className="relative group shrink-0"
-            title="Klik untuk ubah profil"
+            onClick={() => setIsDetailAnnouncementOpen(true)}
+            className="px-3.5 py-1.5 rounded-full text-xs font-bold border border-indigo-200 text-indigo-600 hover:bg-indigo-50 transition-colors flex items-center gap-1"
           >
-            <img
-              src={currentUser.avatar}
-              alt={currentUser.name}
-              className="w-10 h-10 rounded-full object-cover ring-2 ring-slate-200 group-hover:ring-emerald-500 transition-all"
-            />
-            <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-slate-900 text-white flex items-center justify-center ring-2 ring-white">
-              <Pencil size={8} />
-            </span>
+            <span>Detail BPH</span>
           </button>
-
-          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-rose-500 to-amber-500 p-0.5 shadow-xs">
-            <img
-              src="/logoterravana.png"
-              alt="Terravana Phoenix Logo"
-              className="w-full h-full object-contain bg-white rounded-full p-1"
-            />
-          </div>
         </div>
       </div>
 
-      {/* 2. MAIN KPI CARD (WARNA MINT / EMERALD SOFT ALA VISILY HEALTH SCORE) */}
-      <section className="bg-gradient-to-br from-emerald-100/90 via-teal-50 to-emerald-50 rounded-3xl p-5 border border-emerald-200/80 shadow-xs flex items-center justify-between gap-4">
-        <div className="space-y-1.5 flex-1 min-w-0">
-          <span className="text-xs font-extrabold text-emerald-900 block tracking-tight">
+      {/* 2. HEALTH SCORE STYLE CARD (PERSISI VISILY CARD 1) */}
+      <section className="relative overflow-hidden bg-[#F2F3FF] rounded-3xl p-6 border border-indigo-100/60 shadow-xs flex items-start justify-between gap-4">
+        <div className="space-y-2 max-w-[240px]">
+          <h2 className="text-base font-extrabold text-slate-900 tracking-tight">
             Terraquiz KPI
-          </span>
-          <p className="text-xs text-emerald-800/80 font-medium leading-relaxed">
-            Berdasarkan tracker hafalan angkatan, skor kamu dianggap <span className="font-bold text-emerald-950">Sangat Baik</span>.
+          </h2>
+          <p className="text-xs text-slate-600 leading-relaxed font-medium">
+            Berdasarkan tracker hafalan angkatan, skor kamu adalah <span className="font-bold text-slate-900">{kpiPercentage}%</span> dan dianggap baik.
           </p>
           <button
             type="button"
             onClick={() => onNavigateTab('terraquiz')}
-            className="text-xs font-black text-emerald-900 hover:underline inline-flex items-center gap-0.5 pt-1"
+            className="text-xs font-black text-indigo-600 hover:underline inline-flex items-center gap-1 pt-1"
           >
             <span>Tell me more</span>
-            <ChevronRight size={14} />
+            <ChevronRight size={13} />
           </button>
         </div>
 
-        {/* CIRCULAR PROGRESS INDICATOR PRESISI */}
-        <div className="relative w-20 h-20 shrink-0 flex items-center justify-center">
-          <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
-            <path
-              className="text-emerald-200/80"
-              strokeWidth="4"
-              stroke="currentColor"
-              fill="none"
-              d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-            />
-            <path
-              className="text-emerald-600 transition-all duration-700 ease-out"
-              strokeDasharray={`${kpiPercentage}, 100`}
-              strokeWidth="4"
-              strokeLinecap="round"
-              stroke="currentColor"
-              fill="none"
-              d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-            />
-          </svg>
-          <div className="absolute flex flex-col items-center justify-center text-center">
-            <span className="text-lg font-black text-emerald-950 leading-none">{kpiPercentage}</span>
-            <span className="text-[8px] font-extrabold text-emerald-700 uppercase mt-0.5">% KPI</span>
-          </div>
+        {/* BADGE SKOR PINK/MERAH ALA VISILY */}
+        <div className="w-16 h-20 bg-rose-400 text-white rounded-2xl rounded-b-3xl flex flex-col items-center justify-center shadow-md shrink-0 font-black text-2xl">
+          {kpiPercentage}
         </div>
       </section>
 
-      {/* 3. HIGHLIGHTS & URGENT ANNOUNCEMENT (CLEAN RINGKAS) */}
+      {/* 3. HIGHLIGHTS GRID 2x2 (WARNA-WARNI SOLID ALA VISILY) */}
       <section className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-extrabold text-slate-900">Highlights</h2>
+          <h2 className="text-base font-black text-slate-900">Highlights</h2>
           <button
             type="button"
             onClick={() => setIsDetailAnnouncementOpen(true)}
-            className="text-xs font-bold text-slate-500 hover:text-slate-900 flex items-center gap-0.5"
+            className="text-xs font-bold text-slate-400 hover:text-slate-900 flex items-center gap-0.5"
           >
             <span>View more</span>
             <ChevronRight size={13} />
           </button>
         </div>
 
-        <div className="bg-gradient-to-br from-rose-50 to-orange-50/50 rounded-3xl p-4 border border-rose-100/80 shadow-xs space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-rose-600 text-white">
-                <AlertTriangle size={10} />
-                PENGUMUMAN URGENT
+        <div className="grid grid-cols-2 gap-3.5">
+          {/* CARD 1: PENGUMUMAN URGENT (UNGU/INDIGO) */}
+          <div
+            onClick={() => setIsDetailAnnouncementOpen(true)}
+            className="bg-[#7A82FC] text-white rounded-3xl p-4 flex flex-col justify-between min-h-[140px] shadow-sm cursor-pointer hover:opacity-95 transition-opacity"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-indigo-100">
+                Pengumuman
               </span>
-              <span className="text-[11px] font-bold text-rose-800">{announcement.category}</span>
+              <AlertTriangle size={24} className="text-white/80" />
             </div>
-
-            {currentUser.is_officer && onEditAnnouncement && (
-              <button
-                type="button"
-                onClick={onEditAnnouncement}
-                className="text-[10px] font-extrabold px-2 py-0.5 rounded bg-rose-200 text-rose-900"
-              >
-                Edit
-              </button>
-            )}
-          </div>
-
-          <h3 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug">
-            {announcement.title}
-          </h3>
-
-          <div className="pt-2 border-t border-rose-100/80 flex items-center justify-between text-xs">
-            <button
-              type="button"
-              onClick={() => setIsDetailAnnouncementOpen(true)}
-              className="text-xs font-black text-rose-700 hover:underline flex items-center gap-0.5"
-            >
-              <span>Lihat detail &gt;</span>
-            </button>
-
-            <div className="flex items-center gap-1 font-extrabold text-slate-700 text-[11px]">
-              <Clock size={12} className="text-rose-500" />
-              <span>Sidang: {timeLeft.days}d {timeLeft.hours}h {timeLeft.minutes}m</span>
+            <div>
+              <span className="text-[10px] font-bold text-indigo-200 block">Urgent Forum</span>
+              <h3 className="text-sm font-black text-white leading-tight mt-0.5 line-clamp-2">
+                {announcement.title}
+              </h3>
+              <span className="text-[10px] font-semibold text-indigo-100 mt-2 block">
+                Sidang: {timeLeft.days}d {timeLeft.hours}h
+              </span>
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* 4. VISILY WEEKLY REPORT GRID (KARTU WARNA-WARNI SOFT) */}
-      <section className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-extrabold text-slate-900">Agenda & Ranking</h2>
-          <button
-            type="button"
+          {/* CARD 2: AGENDA TERDEKAT (ORANGE/SAGE) */}
+          <div
             onClick={() => onNavigateTab('terrafinder')}
-            className="text-xs font-bold text-slate-500 hover:text-slate-900 flex items-center gap-0.5"
+            className="bg-[#FFAA7A] text-white rounded-3xl p-4 flex flex-col justify-between min-h-[140px] shadow-sm cursor-pointer hover:opacity-95 transition-opacity"
           >
-            <span>View more</span>
-            <ChevronRight size={13} />
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {/* KARTU AGENDA (AKSEN SOFT BLUE) */}
-          <div className="bg-gradient-to-br from-blue-50 to-slate-50 rounded-3xl p-4 border border-blue-100 shadow-xs space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-blue-100/80">
-              <div className="flex items-center gap-2">
-                <Calendar size={15} className="text-blue-600" />
-                <span className="text-xs font-extrabold text-slate-900">Agenda Angkatan</span>
-              </div>
-              <button
-                type="button"
-                onClick={onOpenAddAgenda}
-                className="p-1 rounded-lg bg-blue-100 text-blue-800 hover:bg-blue-200"
-              >
-                <Plus size={13} />
-              </button>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-orange-100">
+                Agenda Utama
+              </span>
+              <Calendar size={24} className="text-white/80" />
             </div>
-
-            <div className="space-y-2">
-              {agendas.slice(0, 3).map((item) => (
-                <div
-                  key={item.id}
-                  className="flex items-start gap-2 p-2 rounded-2xl bg-white/80 border border-blue-50 text-xs"
-                >
-                  <button
-                    type="button"
-                    onClick={() => onToggleAgenda(item.id)}
-                    className="mt-0.5 text-slate-300 hover:text-emerald-600 shrink-0"
-                  >
-                    {item.is_completed ? (
-                      <CheckCircle2 size={15} className="text-emerald-500" />
-                    ) : (
-                      <Circle size={15} />
-                    )}
-                  </button>
-                  <div className="flex-1 min-w-0">
-                    <span className={`font-bold block truncate ${item.is_completed ? 'line-through text-slate-400' : 'text-slate-800'}`}>
-                      {item.title}
-                    </span>
-                    <span className="text-[10px] text-slate-400">{item.date} • {item.time}</span>
-                  </div>
-                </div>
-              ))}
+            <div>
+              <span className="text-[10px] font-bold text-orange-100 block">
+                {agendas[0]?.date || 'Mendatang'}
+              </span>
+              <h3 className="text-sm font-black text-white leading-tight mt-0.5 line-clamp-2">
+                {agendas[0]?.title || 'Tidak ada agenda'}
+              </h3>
+              <span className="text-[10px] font-semibold text-orange-100 mt-2 block">
+                {agendas[0]?.time || '-'}
+              </span>
             </div>
           </div>
 
-          {/* KARTU TOP HAFALAN (AKSEN SOFT AMBER) */}
-          <div className="bg-gradient-to-br from-amber-50/80 via-orange-50/40 to-slate-50 rounded-3xl p-4 border border-amber-100 shadow-xs space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-amber-100/80">
-              <div className="flex items-center gap-2">
-                <Trophy size={15} className="text-amber-600" />
-                <span className="text-xs font-extrabold text-slate-900">Top 3 Hafalan</span>
-              </div>
-              <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
-                KPI Leaderboard
+          {/* CARD 3: TOP HAFALAN (TEAL/CYAN) */}
+          <div
+            onClick={() => onNavigateTab('terraquiz')}
+            className="bg-[#007EA7] text-white rounded-3xl p-4 flex flex-col justify-between min-h-[140px] shadow-sm cursor-pointer hover:opacity-95 transition-opacity"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-cyan-100">
+                Leaderboard
+              </span>
+              <Trophy size={24} className="text-white/80" />
+            </div>
+            <div>
+              <span className="text-[10px] font-bold text-cyan-200 block">Rank #1 Hafalan</span>
+              <h3 className="text-sm font-black text-white leading-tight mt-0.5 truncate">
+                {leaderboard[0]?.name || '-'}
+              </h3>
+              <span className="text-[10px] font-semibold text-cyan-100 mt-2 block">
+                {leaderboard[0]?.masteredCount} Anak Dikuasai
               </span>
             </div>
+          </div>
 
-            <div className="space-y-2">
-              {leaderboard.slice(0, 3).map((entry) => (
-                <div key={entry.rank} className="flex items-center justify-between p-2 rounded-2xl bg-white/80 text-xs border border-amber-50">
-                  <div className="flex items-center gap-2">
-                    <span className="w-5 h-5 rounded-full bg-amber-400 text-slate-950 flex items-center justify-center text-[10px] font-black">
-                      {entry.rank}
-                    </span>
-                    <img src={entry.avatar} alt={entry.name} className="w-6 h-6 rounded-full object-cover" />
-                    <span className="font-bold text-slate-800 truncate max-w-[100px]">{entry.name}</span>
-                  </div>
-                  <span className="font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-lg text-[10px]">
-                    {entry.masteredCount} Anak
-                  </span>
-                </div>
-              ))}
+          {/* CARD 4: DIREKTORI MAHASISWA (PURPLE) */}
+          <div
+            onClick={() => onNavigateTab('terrafinder')}
+            className="bg-[#5C428E] text-white rounded-3xl p-4 flex flex-col justify-between min-h-[140px] shadow-sm cursor-pointer hover:opacity-95 transition-opacity"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-purple-200">
+                Direktori
+              </span>
+              <Users size={24} className="text-white/80" />
+            </div>
+            <div>
+              <span className="text-[10px] font-bold text-purple-200 block">Angkatan 2026</span>
+              <h3 className="text-sm font-black text-white leading-tight mt-0.5">
+                170 Mahasiswa
+              </h3>
+              <span className="text-[10px] font-semibold text-purple-200 mt-2 block">
+                Cari Kontak & Kos &gt;
+              </span>
             </div>
           </div>
         </div>
