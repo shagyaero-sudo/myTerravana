@@ -3,13 +3,16 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   Heart,
   MessageCircle,
-  Image as ImageIcon,
   Send,
   X,
   MoreHorizontal,
   Trash2,
   Edit2,
   Flag,
+  BarChart2,
+  Sparkles,
+  Lock,
+  Plus,
 } from 'lucide-react';
 import { Post, StudentUser, PostComment } from '../types';
 
@@ -38,12 +41,27 @@ export const TweeterraView: React.FC<TweeterraViewProps> = ({
 }) => {
   const [isComposeOpen, setIsComposeOpen] = useState(false);
   const [content, setContent] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
+  const [isAnonymous, setIsAnonymous] = useState(false);
   const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
   const [commentInputs, setCommentInputs] = useState<{ [postId: string]: string }>({});
   const [activeMenuPostId, setActiveMenuPostId] = useState<string | null>(null);
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
+
+  // Mock State untuk Daily Polls
+  const [pollVotes, setPollVotes] = useState<{ [key: number]: number }>({ 0: 42, 1: 28, 2: 15 });
+  const [hasVoted, setHasVoted] = useState(false);
+  const [selectedPollOption, setSelectedPollOption] = useState<number | null>(null);
+
+  const pollOptions = ['Tim Keputih (Kuliner)', 'Tim Gebang (Praktis)', 'Laju / Lulusan Rumah'];
+  const totalPollVotes = Object.values(pollVotes).reduce((a, b) => a + b, 0);
+
+  const handleVote = (index: number) => {
+    if (hasVoted) return;
+    setPollVotes((prev) => ({ ...prev, [index]: prev[index] + 1 }));
+    setHasVoted(true);
+    setSelectedPollOption(index);
+  };
 
   const handleCreatePost = (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,23 +69,24 @@ export const TweeterraView: React.FC<TweeterraViewProps> = ({
 
     const newPost: Post = {
       id: `post-${Date.now()}`,
-      author_id: currentUser.id,
-      author_name: currentUser.name,
-      author_nickname: currentUser.nickname.toLowerCase(),
-      author_avatar: currentUser.avatar,
-      author_kelompok: currentUser.kelompok,
+      author_id: isAnonymous ? 'anon' : currentUser.id,
+      author_name: isAnonymous ? 'Secret Phoenix 🪶' : currentUser.name,
+      author_nickname: isAnonymous ? 'anonim' : currentUser.nickname.toLowerCase(),
+      author_avatar: isAnonymous
+        ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250'
+        : currentUser.avatar,
+      author_kelompok: isAnonymous ? 0 : currentUser.kelompok,
       content: content.trim(),
-      image_url: imageUrl.trim() || undefined,
       created_at: 'Baru saja',
       likes_count: 0,
       is_liked: false,
       comments: [],
-      category: 'Keseruan',
+      category: isAnonymous ? 'Menfess' : 'Keseruan',
     };
 
     onAddPost(newPost);
     setContent('');
-    setImageUrl('');
+    setIsAnonymous(false);
     setIsComposeOpen(false);
   };
 
@@ -96,288 +115,322 @@ export const TweeterraView: React.FC<TweeterraViewProps> = ({
   };
 
   return (
-    <div id="tweeterra-view-root" className="max-w-2xl mx-auto space-y-4 pb-32">
-      {/* HEADER & TRIGGER MODAL COMPOSE */}
-      <div className="pt-2 flex items-center justify-between">
+    <div id="tweeterra-view-root" className="max-w-2xl mx-auto space-y-5 pb-36 font-sans">
+      {/* HEADER TWEETERRA / TERRA-ZONE */}
+      <div className="flex items-center justify-between pt-1">
         <div>
-          <h2 className="text-2xl font-extrabold tracking-tight text-slate-900">
-            Tweeterra
+          <h2 className="text-2xl font-black tracking-tight text-slate-900">
+            Tweeterra & Zone
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Ada cerita apa? 
+          <p className="text-xs text-slate-400 font-medium mt-0.5">
+            Polling harian, menfess & tempat cerita santai angkatan
           </p>
         </div>
+
+        <button
+          type="button"
+          onClick={() => setIsComposeOpen(true)}
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors shadow-xs"
+        >
+          <Plus size={15} />
+          <span>Post Cerita</span>
+        </button>
       </div>
 
-      {/* TRIGGER INPUT BAR (CLICK TO OPEN MODAL) */}
-      <div
-        onClick={() => setIsComposeOpen(true)}
-        className="bg-white rounded-2xl border border-black/[0.06] p-4 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.03)] cursor-pointer hover:border-slate-300 transition-all flex items-center gap-3"
-      >
-        <img
-          src={currentUser.avatar}
-          alt={currentUser.name}
-          className="w-10 h-10 rounded-full object-cover ring-1 ring-slate-100 shrink-0"
-        />
-        <span className="text-sm text-slate-400 font-medium flex-1">
-          Tulis ceritamu...
-        </span>
-        <span className="px-3 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-bold">
-          Post
-        </span>
-      </div>
-
-      {/* UNIFIED TWITTER-STYLE FEED CONTAINER */}
-      <div className="bg-white rounded-2xl border border-black/[0.06] shadow-[0_2px_12px_-3px_rgba(0,0,0,0.03)] overflow-hidden divide-y divide-slate-100">
-        {posts.length === 0 ? (
-          <div className="text-center py-12 p-6">
-            <p className="text-sm font-semibold text-slate-700">Belum ada postingan cerita.</p>
-            <p className="text-xs text-slate-400 mt-1">
-              Tulis postingan pertama untuk menyapa teman seangkatan!
-            </p>
+      {/* 1. GAMIFIKASI: DAILY POLL OF THE DAY (STYLE VISILY MINT/PURPLE) */}
+      <section className="bg-gradient-to-br from-indigo-50/90 via-purple-50/50 to-slate-50 rounded-3xl p-5 border border-indigo-100 shadow-xs space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-indigo-600 text-white flex items-center gap-1">
+              <Sparkles size={10} />
+              VOTE HARI INI
+            </span>
+            <span className="text-xs font-bold text-slate-400">Total {totalPollVotes} Suara</span>
           </div>
-        ) : (
-          posts.map((post) => {
-            const isCommentsOpen = activeCommentPostId === post.id;
-            const isMenuOpen = activeMenuPostId === post.id;
-            const isOwner = post.author_id === currentUser.id;
+          <BarChart2 size={18} className="text-indigo-500" />
+        </div>
+
+        <div>
+          <h3 className="text-sm font-extrabold text-slate-900 leading-snug">
+            Kosan paling strategis & favorit anak Terravana 2026?
+          </h3>
+        </div>
+
+        {/* OPTIONS & RESULTS BAR */}
+        <div className="space-y-2 pt-1">
+          {pollOptions.map((opt, idx) => {
+            const count = pollVotes[idx] || 0;
+            const percent = totalPollVotes > 0 ? Math.round((count / totalPollVotes) * 100) : 0;
 
             return (
-              <article key={post.id} className="p-4 sm:p-5 hover:bg-slate-50/50 transition-colors relative">
-                <div className="flex items-start gap-3">
-                  <img
-                    src={post.author_avatar}
-                    alt={post.author_name}
-                    className="w-10 h-10 rounded-full object-cover ring-1 ring-black/5 shrink-0 cursor-pointer"
-                    onClick={() => onSelectStudent(post.author_name)}
+              <button
+                key={idx}
+                type="button"
+                onClick={() => handleVote(idx)}
+                className={`relative w-full p-3 rounded-2xl border text-left transition-all overflow-hidden ${
+                  selectedPollOption === idx
+                    ? 'border-indigo-500 bg-indigo-100/50'
+                    : 'border-slate-200/80 bg-white/80 hover:bg-white'
+                }`}
+              >
+                {/* PROGRESS BAR BACKGROUND */}
+                {hasVoted && (
+                  <div
+                    className="absolute top-0 left-0 bottom-0 bg-indigo-200/50 transition-all duration-500"
+                    style={{ width: `${percent}%` }}
                   />
+                )}
 
-                  <div className="flex-1 min-w-0">
-                    {/* META ROW & TRIPLE DOT MENU */}
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span
-                          onClick={() => onSelectStudent(post.author_name)}
-                          className="text-xs sm:text-sm font-bold text-slate-900 hover:underline cursor-pointer"
-                        >
-                          {post.author_name}
-                        </span>
-                        <span className="text-[11px] text-slate-400 font-medium">
-                          @{post.author_nickname}
-                        </span>
-                        <span className="text-slate-300">•</span>
-                        <span className="text-[11px] text-slate-400">{post.created_at}</span>
-                      </div>
+                <div className="relative flex items-center justify-between text-xs font-bold text-slate-800">
+                  <span>{opt}</span>
+                  {hasVoted && <span className="text-indigo-700 font-extrabold">{percent}%</span>}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </section>
 
-                      {/* TRIPLE DOT BUTTON */}
-                      <div className="relative">
-                        <button
-                          type="button"
-                          onClick={() => setActiveMenuPostId(isMenuOpen ? null : post.id)}
-                          className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
-                        >
-                          <MoreHorizontal size={16} />
-                        </button>
+      {/* 2. UNIFIED FEED CONTAINER (VISILY CARD STYLE) */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-extrabold text-slate-900">Linimasa & Menfess</h3>
+          <span className="text-xs font-bold text-slate-400">{posts.length} Postingan</span>
+        </div>
 
-                        {/* POPUP MENU */}
-                        <AnimatePresence>
-                          {isMenuOpen && (
-                            <motion.div
-                              initial={{ opacity: 0, scale: 0.95 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              exit={{ opacity: 0, scale: 0.95 }}
-                              className="absolute right-0 top-7 z-20 w-36 bg-white rounded-xl shadow-lg border border-black/[0.08] py-1 text-xs font-semibold text-slate-700"
-                            >
-                              {isOwner ? (
-                                <>
+        <div className="space-y-3">
+          {posts.length === 0 ? (
+            <div className="text-center py-12 p-6 bg-white rounded-3xl border border-slate-100">
+              <p className="text-xs font-bold text-slate-500">Belum ada postingan cerita.</p>
+            </div>
+          ) : (
+            posts.map((post) => {
+              const isCommentsOpen = activeCommentPostId === post.id;
+              const isMenuOpen = activeMenuPostId === post.id;
+              const isOwner = post.author_id === currentUser.id;
+              const isMenfess = post.category === 'Menfess';
+
+              return (
+                <article
+                  key={post.id}
+                  className="bg-white rounded-3xl p-5 border border-slate-100/90 shadow-xs space-y-3 relative"
+                >
+                  <div className="flex items-start gap-3">
+                    <img
+                      src={post.author_avatar}
+                      alt={post.author_name}
+                      className="w-10 h-10 rounded-full object-cover ring-2 ring-slate-100 shrink-0 cursor-pointer"
+                      onClick={() => !isMenfess && onSelectStudent(post.author_name)}
+                    />
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span
+                            onClick={() => !isMenfess && onSelectStudent(post.author_name)}
+                            className="text-xs sm:text-sm font-bold text-slate-900 hover:underline cursor-pointer"
+                          >
+                            {post.author_name}
+                          </span>
+                          {isMenfess && (
+                            <span className="px-2 py-0.2 rounded-full text-[9px] font-black bg-purple-100 text-purple-700 flex items-center gap-0.5">
+                              <Lock size={8} /> Anonim
+                            </span>
+                          )}
+                          <span className="text-slate-300">•</span>
+                          <span className="text-[11px] text-slate-400 font-medium">{post.created_at}</span>
+                        </div>
+
+                        {/* MENU ACTION */}
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={() => setActiveMenuPostId(isMenuOpen ? null : post.id)}
+                            className="p-1 rounded-lg text-slate-400 hover:text-slate-700 transition-colors"
+                          >
+                            <MoreHorizontal size={16} />
+                          </button>
+
+                          <AnimatePresence>
+                            {isMenuOpen && (
+                              <motion.div
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                className="absolute right-0 top-7 z-20 w-36 bg-white rounded-2xl shadow-xl border border-slate-100 py-1 text-xs font-bold text-slate-700"
+                              >
+                                {isOwner ? (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setEditingPostId(post.id);
+                                        setEditContent(post.content);
+                                        setActiveMenuPostId(null);
+                                      }}
+                                      className="w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-50 text-slate-700"
+                                    >
+                                      <Edit2 size={13} />
+                                      <span>Edit Post</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        if (onDeletePost) onDeletePost(post.id);
+                                        setActiveMenuPostId(null);
+                                      }}
+                                      className="w-full flex items-center gap-2 px-3 py-2 hover:bg-rose-50 text-rose-600"
+                                    >
+                                      <Trash2 size={13} />
+                                      <span>Hapus</span>
+                                    </button>
+                                  </>
+                                ) : (
                                   <button
                                     type="button"
                                     onClick={() => {
-                                      setEditingPostId(post.id);
-                                      setEditContent(post.content);
+                                      if (onReportPost) onReportPost(post.id);
                                       setActiveMenuPostId(null);
-                                    }}
-                                    className="w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-50 text-slate-700"
-                                  >
-                                    <Edit2 size={13} />
-                                    <span>Edit Post</span>
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      if (onDeletePost) onDeletePost(post.id);
-                                      setActiveMenuPostId(null);
+                                      alert('Postingan telah dilaporkan.');
                                     }}
                                     className="w-full flex items-center gap-2 px-3 py-2 hover:bg-rose-50 text-rose-600"
                                   >
-                                    <Trash2 size={13} />
-                                    <span>Hapus</span>
+                                    <Flag size={13} />
+                                    <span>Laporkan</span>
                                   </button>
-                                </>
-                              ) : (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    if (onReportPost) onReportPost(post.id);
-                                    setActiveMenuPostId(null);
-                                    alert('Postingan telah dilaporkan ke pengurus.');
-                                  }}
-                                  className="w-full flex items-center gap-2 px-3 py-2 hover:bg-rose-50 text-rose-600"
-                                >
-                                  <Flag size={13} />
-                                  <span>Report</span>
-                                </button>
-                              )}
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </div>
-                    </div>
-
-                    {/* CONTENT EDIT MODE / READ MODE */}
-                    {editingPostId === post.id ? (
-                      <div className="mt-2 space-y-2">
-                        <textarea
-                          rows={2}
-                          value={editContent}
-                          onChange={(e) => setEditContent(e.target.value)}
-                          className="w-full text-xs sm:text-sm p-2 rounded-xl border border-slate-200 focus:outline-none focus:border-slate-900"
-                        />
-                        <div className="flex justify-end gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setEditingPostId(null)}
-                            className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 text-slate-600"
-                          >
-                            Batal
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleSaveEdit(post.id)}
-                            className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-900 text-white"
-                          >
-                            Simpan
-                          </button>
+                                )}
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
                         </div>
                       </div>
-                    ) : (
-                      <p className="mt-1.5 text-xs sm:text-sm text-slate-800 leading-relaxed whitespace-pre-line">
-                        {post.content}
-                      </p>
-                    )}
 
-                    {/* OPTIONAL IMAGE */}
-                    {post.image_url && (
-                      <div className="mt-3 rounded-xl overflow-hidden border border-slate-200/80">
-                        <img
-                          src={post.image_url}
-                          alt="Post media"
-                          className="w-full max-h-80 object-cover"
-                        />
-                      </div>
-                    )}
-
-                    {/* ACTIONS: LIKE & REPLIES */}
-                    <div className="mt-3 flex items-center gap-6 text-slate-500 text-xs">
-                      <button
-                        type="button"
-                        onClick={() => onToggleLike(post.id)}
-                        className={`inline-flex items-center gap-1.5 transition-colors ${
-                          post.is_liked ? 'text-rose-600 font-bold' : 'hover:text-rose-600'
-                        }`}
-                      >
-                        <Heart
-                          size={15}
-                          className={post.is_liked ? 'fill-rose-600 stroke-rose-600' : ''}
-                        />
-                        <span>{post.likes_count}</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setActiveCommentPostId(isCommentsOpen ? null : post.id)}
-                        className={`inline-flex items-center gap-1.5 transition-colors ${
-                          isCommentsOpen ? 'text-slate-900 font-bold' : 'hover:text-slate-900'
-                        }`}
-                      >
-                        <MessageCircle size={15} />
-                        <span>{post.comments.length} Balasan</span>
-                      </button>
-                    </div>
-
-                    {/* EXPANDABLE COMMENTS */}
-                    <AnimatePresence>
-                      {isCommentsOpen && (
-                        <motion.div
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: 'auto' }}
-                          exit={{ opacity: 0, height: 0 }}
-                          className="mt-3 pt-3 border-t border-slate-100 space-y-3 overflow-hidden"
-                        >
-                          {post.comments.length > 0 && (
-                            <div className="space-y-2 pl-2 border-l-2 border-slate-100">
-                              {post.comments.map((comm) => (
-                                <div key={comm.id} className="flex items-start gap-2 text-xs">
-                                  <img
-                                    src={comm.author_avatar}
-                                    alt={comm.author_name}
-                                    className="w-6 h-6 rounded-full object-cover shrink-0 mt-0.5"
-                                  />
-                                  <div className="bg-slate-50 rounded-xl px-3 py-2 flex-1">
-                                    <div className="flex items-center justify-between gap-1">
-                                      <span className="font-bold text-slate-900 text-[11px]">
-                                        {comm.author_name}
-                                      </span>
-                                      <span className="text-[10px] text-slate-400">
-                                        {comm.created_at}
-                                      </span>
-                                    </div>
-                                    <p className="text-slate-700 mt-0.5 text-xs">{comm.content}</p>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-
-                          <div className="flex items-center gap-2 pt-1">
-                            <input
-                              type="text"
-                              placeholder="Tulis balasan..."
-                              value={commentInputs[post.id] || ''}
-                              onChange={(e) =>
-                                setCommentInputs((prev) => ({
-                                  ...prev,
-                                  [post.id]: e.target.value,
-                                }))
-                              }
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                  e.preventDefault();
-                                  handleSendComment(post.id);
-                                }
-                              }}
-                              className="flex-1 text-xs px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-1 focus:ring-slate-900"
-                            />
+                      {/* CONTENT BODY */}
+                      {editingPostId === post.id ? (
+                        <div className="mt-2 space-y-2">
+                          <textarea
+                            rows={2}
+                            value={editContent}
+                            onChange={(e) => setEditContent(e.target.value)}
+                            className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-slate-900"
+                          />
+                          <div className="flex justify-end gap-2">
                             <button
                               type="button"
-                              onClick={() => handleSendComment(post.id)}
-                              className="px-3 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-colors"
+                              onClick={() => setEditingPostId(null)}
+                              className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 text-slate-600"
                             >
-                              Kirim
+                              Batal
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleSaveEdit(post.id)}
+                              className="px-2.5 py-1 text-xs font-bold rounded-lg bg-indigo-600 text-white"
+                            >
+                              Simpan
                             </button>
                           </div>
-                        </motion.div>
+                        </div>
+                      ) : (
+                        <p className="mt-1.5 text-xs sm:text-sm text-slate-800 leading-relaxed whitespace-pre-line font-medium">
+                          {post.content}
+                        </p>
                       )}
-                    </AnimatePresence>
-                  </div>
-                </div>
-              </article>
-            );
-          })
-        )}
-      </div>
 
-      {/* MODAL COMPOSE (INTIMATE CREATOR MODE) */}
+                      {/* ACTIONS BAR */}
+                      <div className="mt-3 flex items-center gap-5 text-slate-400 text-xs">
+                        <button
+                          type="button"
+                          onClick={() => onToggleLike(post.id)}
+                          className={`inline-flex items-center gap-1 transition-colors ${
+                            post.is_liked ? 'text-rose-600 font-extrabold' : 'hover:text-rose-600'
+                          }`}
+                        >
+                          <Heart
+                            size={15}
+                            className={post.is_liked ? 'fill-rose-600 stroke-rose-600' : ''}
+                          />
+                          <span>{post.likes_count}</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setActiveCommentPostId(isCommentsOpen ? null : post.id)}
+                          className="inline-flex items-center gap-1 hover:text-slate-900 transition-colors"
+                        >
+                          <MessageCircle size={15} />
+                          <span>{post.comments.length} Balasan</span>
+                        </button>
+                      </div>
+
+                      {/* EXPANDABLE REPLIES */}
+                      <AnimatePresence>
+                        {isCommentsOpen && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="mt-3 pt-3 border-t border-slate-100 space-y-2 overflow-hidden"
+                          >
+                            {post.comments.map((comm) => (
+                              <div key={comm.id} className="flex items-start gap-2 text-xs">
+                                <img
+                                  src={comm.author_avatar}
+                                  alt={comm.author_name}
+                                  className="w-5 h-5 rounded-full object-cover shrink-0 mt-0.5"
+                                />
+                                <div className="bg-slate-50 rounded-2xl px-3 py-2 flex-1 border border-slate-100">
+                                  <div className="flex items-center justify-between gap-1">
+                                    <span className="font-bold text-slate-900 text-[11px]">
+                                      {comm.author_name}
+                                    </span>
+                                    <span className="text-[9px] text-slate-400">{comm.created_at}</span>
+                                  </div>
+                                  <p className="text-slate-700 text-xs mt-0.5">{comm.content}</p>
+                                </div>
+                              </div>
+                            ))}
+
+                            <div className="flex items-center gap-2 pt-1">
+                              <input
+                                type="text"
+                                placeholder="Tulis balasan..."
+                                value={commentInputs[post.id] || ''}
+                                onChange={(e) =>
+                                  setCommentInputs((prev) => ({
+                                    ...prev,
+                                    [post.id]: e.target.value,
+                                  }))
+                                }
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    handleSendComment(post.id);
+                                  }
+                                }}
+                                className="flex-1 text-xs px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-1 focus:ring-slate-900"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleSendComment(post.id)}
+                                className="px-3 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold"
+                              >
+                                Kirim
+                              </button>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  </div>
+                </article>
+              );
+            })
+          )}
+        </div>
+      </section>
+
+      {/* MODAL COMPOSE (POST & MENFESS) */}
       <AnimatePresence>
         {isComposeOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
@@ -385,70 +438,49 @@ export const TweeterraView: React.FC<TweeterraViewProps> = ({
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-lg bg-white rounded-3xl p-5 shadow-2xl border border-black/[0.08]"
+              className="w-full max-w-lg bg-white rounded-3xl p-6 shadow-2xl border border-slate-100 space-y-4"
             >
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <span className="text-sm font-bold text-slate-900">Buat Postingan Baru</span>
+                <span className="text-sm font-extrabold text-slate-900">Buat Postingan Baru</span>
                 <button
                   type="button"
                   onClick={() => setIsComposeOpen(false)}
-                  className="p-1 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500"
+                  className="p-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500"
                 >
                   <X size={16} />
                 </button>
               </div>
 
-              <form onSubmit={handleCreatePost} className="mt-4 space-y-4">
-                <div className="flex items-start gap-3">
-                  <img
-                    src={currentUser.avatar}
-                    alt={currentUser.name}
-                    className="w-10 h-10 rounded-full object-cover"
-                  />
-                  <textarea
-                    rows={4}
-                    autoFocus
-                    placeholder="Apa yang ingin kamu bagikan dengan angkatan Terravana?"
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                    className="w-full text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none resize-none bg-transparent"
-                  />
-                </div>
+              <form onSubmit={handleCreatePost} className="space-y-4">
+                <textarea
+                  rows={4}
+                  autoFocus
+                  placeholder="Apa cerita unik atau pertanyaanmu untuk angkatan Terravana?"
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  className="w-full text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none resize-none bg-slate-50 p-3 rounded-2xl border border-slate-100"
+                />
 
-                {imageUrl && (
-                  <div className="relative rounded-xl overflow-hidden border border-slate-200">
-                    <img src={imageUrl} alt="Preview" className="max-h-48 w-full object-cover" />
-                    <button
-                      type="button"
-                      onClick={() => setImageUrl('')}
-                      className="absolute top-2 right-2 p-1 rounded-full bg-slate-900/70 text-white"
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                )}
-
-                <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-                  <input
-                    type="url"
-                    placeholder="URL foto (opsional)..."
-                    value={imageUrl}
-                    onChange={(e) => setImageUrl(e.target.value)}
-                    className="text-xs px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 w-3/5 focus:outline-none"
-                  />
-
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] text-slate-400 font-medium">
-                      {content.length}/280
+                <div className="flex items-center justify-between pt-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={isAnonymous}
+                      onChange={(e) => setIsAnonymous(e.target.checked)}
+                      className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4"
+                    />
+                    <span className="text-xs font-bold text-slate-600 flex items-center gap-1">
+                      <Lock size={12} /> Mode Menfess Anonim
                     </span>
-                    <button
-                      type="submit"
-                      disabled={!content.trim()}
-                      className="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 disabled:bg-slate-100 disabled:text-slate-400"
-                    >
-                      Kirim Post
-                    </button>
-                  </div>
+                  </label>
+
+                  <button
+                    type="submit"
+                    disabled={!content.trim()}
+                    className="px-4 py-2 rounded-2xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 disabled:bg-slate-100 disabled:text-slate-400 transition-all"
+                  >
+                    Kirim Post
+                  </button>
                 </div>
               </form>
             </motion.div>
