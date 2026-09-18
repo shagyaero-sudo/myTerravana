@@ -6,15 +6,13 @@ import {
   Calendar as CalendarIcon,
   Clock,
   MapPin,
-  Flame,
-  ArrowUpRight,
+  ChevronRight,
   Instagram,
   Youtube,
   Send,
-  Sparkles,
-  ChevronRight,
   Megaphone,
   X,
+  ExternalLink,
 } from 'lucide-react';
 import { StudentUser } from '../types';
 
@@ -36,30 +34,31 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onSelectStudent,
 }) => {
   const [isAnnouncementOpen, setIsAnnouncementOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState('25'); // Active Date State
 
   const kpiPercentage = Math.round((masteredCount / totalStudents) * 100);
   const topMasteredStudents = students.filter((s) => s.mastered).slice(0, 4);
 
-  // Strip Tanggal Mingguan (Mock Active Calendar)
+  // Strip Tanggal Mingguan
   const weekDays = [
-    { day: 'Sun', date: '22', active: false },
-    { day: 'Mon', date: '23', active: false },
-    { day: 'Tue', date: '24', active: false },
-    { day: 'Wed', date: '25', active: true },
-    { day: 'Thu', date: '26', active: false },
-    { day: 'Fri', date: '27', active: false },
+    { day: 'Sun', date: '22' },
+    { day: 'Mon', date: '23' },
+    { day: 'Tue', date: '24' },
+    { day: 'Wed', date: '25' },
+    { day: 'Thu', date: '26' },
+    { day: 'Fri', date: '27' },
   ];
 
   return (
     <div id="dashboard-view-root" className="max-w-2xl mx-auto space-y-6 pb-36 font-sans">
-      {/* 1. HEADER ATAS (AVATAR, GREETING & SEARCH BUTTON) */}
+      {/* 1. HEADER ATAS */}
       <div className="flex items-center justify-between pt-2">
         <div className="flex items-center gap-3">
-          <div className="relative">
+          <div className="relative cursor-pointer" onClick={() => onSelectStudent(currentUser)}>
             <img
               src={currentUser.avatar}
               alt={currentUser.name}
-              className="w-12 h-12 rounded-full object-cover ring-4 ring-purple-100 shadow-xs"
+              className="w-12 h-12 rounded-full object-cover ring-4 ring-purple-100 shadow-xs hover:opacity-90 transition-opacity"
             />
             <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 rounded-full ring-2 ring-white" />
           </div>
@@ -94,9 +93,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
       </div>
 
-      {/* 2. HERO BANNER UNGU (DAILY CHALLENGE / TERRAQUIZ KPI) */}
-      <div className="relative bg-[#A088F2] rounded-[32px] p-6 text-white shadow-xl shadow-purple-200/50 overflow-hidden">
-        {/* Animated 3D Soft Clay Spheres SVG */}
+      {/* 2. HERO BANNER UNGU (DAILY CHALLENGE) */}
+      <div 
+        onClick={() => onNavigateToTab('terraquiz')}
+        className="relative bg-[#A088F2] rounded-[32px] p-6 text-white shadow-xl shadow-purple-200/50 overflow-hidden cursor-pointer group transition-all hover:scale-[1.01]"
+      >
+        {/* Animated Soft Clay Spheres SVG */}
         <motion.div
           animate={{
             y: [0, -10, 0],
@@ -136,7 +138,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       key={st.id}
                       src={st.avatar}
                       alt={st.name}
-                      className="inline-block h-8 w-8 rounded-full ring-2 ring-[#A088F2] object-cover"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSelectStudent(st);
+                      }}
+                      className="inline-block h-8 w-8 rounded-full ring-2 ring-[#A088F2] object-cover hover:scale-110 transition-transform"
                     />
                   ))
                 : students.slice(0, 4).map((st) => (
@@ -144,18 +150,31 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       key={st.id}
                       src={st.avatar}
                       alt={st.name}
-                      className="inline-block h-8 w-8 rounded-full ring-2 ring-[#A088F2] object-cover"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSelectStudent(st);
+                      }}
+                      className="inline-block h-8 w-8 rounded-full ring-2 ring-[#A088F2] object-cover hover:scale-110 transition-transform"
                     />
                   ))}
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-[10px] font-black text-white ring-2 ring-[#A088F2]">
+              <div 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onNavigateToTab('terrafinder');
+                }}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-[10px] font-black text-white ring-2 ring-[#A088F2] hover:bg-slate-800"
+              >
                 +{totalStudents - 4}
               </div>
             </div>
 
             <button
               type="button"
-              onClick={() => onNavigateToTab('terraquiz')}
-              className="px-4 py-2 rounded-2xl bg-white text-slate-900 text-xs font-black hover:bg-slate-100 transition-all shadow-xs flex items-center gap-1.5"
+              onClick={(e) => {
+                e.stopPropagation();
+                onNavigateToTab('terraquiz');
+              }}
+              className="px-4 py-2 rounded-2xl bg-white text-slate-900 text-xs font-black hover:bg-slate-100 transition-all shadow-xs flex items-center gap-1.5 group-hover:translate-x-1"
             >
               <span>Mainkan Kuis</span>
               <ChevronRight size={14} />
@@ -164,26 +183,31 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
       </div>
 
-      {/* 3. HORIZONTAL DATE STRIP (WEEKLY) */}
+      {/* 3. HORIZONTAL DATE STRIP */}
       <div className="flex items-center justify-between gap-2 px-1">
-        {weekDays.map((item) => (
-          <div
-            key={item.date}
-            className={`flex-1 flex flex-col items-center py-2.5 rounded-2xl transition-all ${
-              item.active
-                ? 'bg-slate-900 text-white shadow-md scale-105 font-bold'
-                : 'bg-white text-slate-500 hover:bg-slate-50 border border-slate-100'
-            }`}
-          >
-            <span className="text-[10px] font-bold uppercase tracking-wider opacity-80">
-              {item.day}
-            </span>
-            <span className="text-sm font-black mt-0.5">{item.date}</span>
-          </div>
-        ))}
+        {weekDays.map((item) => {
+          const isActive = selectedDate === item.date;
+          return (
+            <button
+              key={item.date}
+              type="button"
+              onClick={() => setSelectedDate(item.date)}
+              className={`flex-1 flex flex-col items-center py-2.5 rounded-2xl transition-all ${
+                isActive
+                  ? 'bg-slate-900 text-white shadow-md scale-105 font-bold'
+                  : 'bg-white text-slate-500 hover:bg-slate-50 border border-slate-100'
+              }`}
+            >
+              <span className="text-[10px] font-bold uppercase tracking-wider opacity-80">
+                {item.day}
+              </span>
+              <span className="text-sm font-black mt-0.5">{item.date}</span>
+            </button>
+          );
+        })}
       </div>
 
-      {/* 4. ASYMMETRIC GRID CARDS (YOUR PLAN / HIGHLIGHTS) */}
+      {/* 4. ASYMMETRIC GRID CARDS */}
       <div className="space-y-3">
         <div className="flex items-center justify-between px-1">
           <h3 className="text-lg font-black text-slate-900 tracking-tight">
@@ -200,7 +224,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* KARTU KUNING PASTEL (AGENDA UTAMA) */}
-          <div className="relative bg-[#FFDA66] rounded-[32px] p-5 text-slate-900 shadow-lg shadow-amber-200/40 flex flex-col justify-between space-y-4 overflow-hidden">
+          <div 
+            onClick={() => setIsAnnouncementOpen(true)}
+            className="relative bg-[#FFDA66] rounded-[32px] p-5 text-slate-900 shadow-lg shadow-amber-200/40 flex flex-col justify-between space-y-4 overflow-hidden cursor-pointer hover:scale-[1.01] transition-transform"
+          >
             {/* Animated Soft Clay Gem SVG */}
             <motion.div
               animate={{
@@ -248,21 +275,30 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </div>
             </div>
 
-            <div className="relative z-10 pt-2 flex items-center gap-2 border-t border-amber-900/10">
-              <div className="w-7 h-7 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-black">
-                T
+            <div className="relative z-10 pt-2 flex items-center justify-between border-t border-amber-900/10">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-black">
+                  T
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold text-amber-900/70 block leading-tight">Panitia</span>
+                  <span className="text-xs font-extrabold text-slate-900">BPH Terravana</span>
+                </div>
               </div>
-              <div>
-                <span className="text-[10px] font-bold text-amber-900/70 block">Panitia</span>
-                <span className="text-xs font-extrabold text-slate-900">BPH Terravana</span>
-              </div>
+
+              <span className="text-amber-900/80 hover:text-amber-950 font-bold text-xs flex items-center gap-0.5">
+                Detail <ExternalLink size={12} />
+              </span>
             </div>
           </div>
 
-          {/* RIGHT COLUMN: KARTU BIRU & PINK PASTEL */}
+          {/* RIGHT COLUMN */}
           <div className="space-y-4 flex flex-col justify-between">
             {/* KARTU BIRU MUDA (BALANCE / STATS) */}
-            <div className="relative bg-[#D0E5FF] rounded-[32px] p-5 text-slate-900 shadow-lg shadow-blue-100/50 flex-1 flex flex-col justify-between space-y-3 overflow-hidden">
+            <div 
+              onClick={() => onNavigateToTab('terraquiz')}
+              className="relative bg-[#D0E5FF] rounded-[32px] p-5 text-slate-900 shadow-lg shadow-blue-100/50 flex-1 flex flex-col justify-between space-y-3 overflow-hidden cursor-pointer hover:scale-[1.01] transition-transform"
+            >
               {/* Animated Floating Sphere */}
               <motion.div
                 animate={{
@@ -301,7 +337,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <div className="relative z-10 pt-1">
                 <button
                   type="button"
-                  onClick={() => onNavigateToTab('terraquiz')}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onNavigateToTab('terraquiz');
+                  }}
                   className="w-full py-2 rounded-2xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-colors shadow-xs"
                 >
                   Uji Hafalan
@@ -309,7 +348,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </div>
             </div>
 
-            {/* KARTU PINK PASTEL (FOLLOW US / MEDIA SOSIAL) */}
+            {/* KARTU PINK PASTEL (MEDIA SOSIAL) */}
             <div className="bg-[#F5C7F7] rounded-[32px] p-4 text-slate-900 shadow-lg shadow-pink-100/50 flex items-center justify-between gap-3">
               <div>
                 <span className="text-xs font-black block">Follow us</span>
@@ -321,7 +360,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   href="https://instagram.com"
                   target="_blank"
                   rel="noreferrer"
-                  className="w-8 h-8 rounded-full bg-white text-pink-600 flex items-center justify-center hover:scale-105 transition-all shadow-xs"
+                  className="w-8 h-8 rounded-full bg-white text-pink-600 flex items-center justify-center hover:scale-110 transition-transform shadow-xs"
                 >
                   <Instagram size={16} />
                 </a>
@@ -329,7 +368,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   href="https://youtube.com"
                   target="_blank"
                   rel="noreferrer"
-                  className="w-8 h-8 rounded-full bg-white text-rose-600 flex items-center justify-center hover:scale-105 transition-all shadow-xs"
+                  className="w-8 h-8 rounded-full bg-white text-rose-600 flex items-center justify-center hover:scale-110 transition-transform shadow-xs"
                 >
                   <Youtube size={16} />
                 </a>
@@ -337,7 +376,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   href="https://telegram.org"
                   target="_blank"
                   rel="noreferrer"
-                  className="w-8 h-8 rounded-full bg-white text-sky-600 flex items-center justify-center hover:scale-105 transition-all shadow-xs"
+                  className="w-8 h-8 rounded-full bg-white text-sky-600 flex items-center justify-center hover:scale-110 transition-transform shadow-xs"
                 >
                   <Send size={15} />
                 </a>
