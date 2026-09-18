@@ -1,7 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  Award,
   Flame,
   CheckCircle2,
   XCircle,
@@ -29,41 +28,53 @@ export const TerraquizView: React.FC<TerraquizViewProps> = ({
   masteredCount,
   totalStudents,
 }) => {
-  const [filterMode, setFilterMode] = useState<'all' | 'unmastered'>('all');
-  const [currentStudentIndex, setCurrentStudentIndex] = useState(0);
+  // Antrean khusus untuk mengulang mahasiswa yang salah dijawab
+  const [reviewQueue, setReviewQueue] = useState<string[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isAnswered, setIsAnswered] = useState(false);
-  const [streak, setStreak] = useState(4);
-  const [bestStreak, setBestStreak] = useState(12);
-  const [sessionCorrect, setSessionCorrect] = useState(8);
-  const [sessionTotal, setSessionTotal] = useState(9);
+  
+  // Stats Sesi
+  const [streak, setStreak] = useState(0);
+  const [bestStreak, setBestStreak] = useState(0);
+  const [sessionCorrect, setSessionCorrect] = useState(0);
+  const [sessionTotal, setSessionTotal] = useState(0);
   const [showHint, setShowHint] = useState(false);
 
-  // Pool mahasiswa aktif berdasarkan filter
-  const activePool = useMemo(() => {
-    if (filterMode === 'unmastered') {
-      const unmastered = students.filter((s) => !s.mastered);
-      return unmastered.length > 0 ? unmastered : students;
+  // Lock options state agar tidak ter-acak ulang saat re-render / diklik
+  const [currentOptions, setCurrentOptions] = useState<string[]>([]);
+
+  // Tentukan mahasiswa aktif (Utamakan dari reviewQueue jika ada, lalu dari unmastered/semua)
+  const currentStudent = useMemo(() => {
+    if (students.length === 0) return null;
+
+    // Cek apakah ada mahasiswa di antrean pengulangan (salah jawab)
+    if (reviewQueue.length > 0 && currentIndex % 3 === 0) {
+      const reviewTargetId = reviewQueue[0];
+      const found = students.find((s) => s.id === reviewTargetId);
+      if (found) return found;
     }
-    return students;
-  }, [students, filterMode]);
 
-  const currentStudent = activePool[currentStudentIndex % activePool.length] || students[0];
+    // Prioritaskan mahasiswa yang belum dihafal
+    const unmastered = students.filter((s) => !s.mastered);
+    const pool = unmastered.length > 0 ? unmastered : students;
+    
+    return pool[currentIndex % pool.length];
+  }, [students, reviewQueue, currentIndex]);
 
-  // Acak 4 pilihan nama (1 benar, 3 salah)
-  const options = useMemo(() => {
-    if (!currentStudent) return [];
+  // Lock pilihan jawaban ketika mahasiswa aktif berganti
+  useEffect(() => {
+    if (!currentStudent) return;
     const correct = currentStudent.name;
     const others = students.filter((s) => s.id !== currentStudent.id);
-
     const shuffledOthers = [...others].sort(() => 0.5 - Math.random());
     const wrong = shuffledOthers.slice(0, 3).map((s) => s.name);
 
-    return [correct, ...wrong].sort(() => 0.5 - Math.random());
+    setCurrentOptions([correct, ...wrong].sort(() => 0.5 - Math.random()));
   }, [currentStudent, students]);
 
   const handleSelectOption = (optionName: string) => {
-    if (isAnswered) return;
+    if (isAnswered || !currentStudent) return;
 
     setSelectedOption(optionName);
     setIsAnswered(true);
@@ -77,11 +88,19 @@ export const TerraquizView: React.FC<TerraquizViewProps> = ({
       setSessionCorrect((prev) => prev + 1);
       setSessionTotal((prev) => prev + 1);
 
-      // Tandai mastered untuk progres KPI
+      // Hapus dari antrean pengulangan jika tadi sempat salah
+      setReviewQueue((prev) => prev.filter((id) => id !== currentStudent.id));
+
+      // Tandai mastered untuk KPI Angkatan
       onUpdateMastered(currentStudent.id, true);
     } else {
       setStreak(0);
       setSessionTotal((prev) => prev + 1);
+
+      // Masukkan ke antrean pengulangan agar muncul kembali dalam 3 soal ke depan
+      if (!reviewQueue.includes(currentStudent.id)) {
+        setReviewQueue((prev) => [...prev, currentStudent.id]);
+      }
     }
   };
 
@@ -89,7 +108,7 @@ export const TerraquizView: React.FC<TerraquizViewProps> = ({
     setSelectedOption(null);
     setIsAnswered(false);
     setShowHint(false);
-    setCurrentStudentIndex((prev) => (prev + 1) % activePool.length);
+    setCurrentIndex((prev) => prev + 1);
   };
 
   const handleResetSession = () => {
@@ -99,122 +118,55 @@ export const TerraquizView: React.FC<TerraquizViewProps> = ({
     setStreak(0);
     setSessionCorrect(0);
     setSessionTotal(0);
-    setCurrentStudentIndex(0);
+    setCurrentIndex(0);
+    setReviewQueue([]);
   };
 
-  const accuracy =
-    sessionTotal > 0 ? Math.round((sessionCorrect / sessionTotal) * 100) : 100;
+  const accuracy = sessionTotal > 0 ? Math.round((sessionCorrect / sessionTotal) * 100) : 100;
   const kpiPercentage = Math.round((masteredCount / totalStudents) * 100);
+
+  if (!currentStudent) return null;
 
   return (
     <div id="terraquiz-view-root" className="max-w-2xl mx-auto space-y-5 pb-36 font-sans">
-      {/* 1. HEADER TERRAQUIZ */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
-        <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-2xl font-black tracking-tight text-slate-900">
-              Terraquiz
-            </h2>
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-100 text-indigo-800">
-              KPI Cadet
-            </span>
-          </div>
-          <p className="text-xs text-slate-400 font-medium mt-0.5">
-            Latihan hafal 170 wajah & nama lengkap mahasiswa Terravana 2026
-          </p>
-        </div>
-
-        {/* Filter Mode Pills */}
-        <div className="flex items-center gap-1 self-start sm:self-auto bg-slate-100 p-1 rounded-2xl">
-          <button
-            type="button"
-            onClick={() => {
-              setFilterMode('all');
-              setCurrentStudentIndex(0);
-              setIsAnswered(false);
-            }}
-            className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${
-              filterMode === 'all'
-                ? 'bg-white text-slate-900 shadow-xs'
-                : 'text-slate-500 hover:text-slate-900'
-            }`}
-          >
-            Semua ({students.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setFilterMode('unmastered');
-              setCurrentStudentIndex(0);
-              setIsAnswered(false);
-            }}
-            className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${
-              filterMode === 'unmastered'
-                ? 'bg-white text-slate-900 shadow-xs'
-                : 'text-slate-500 hover:text-slate-900'
-            }`}
-          >
-            Belum Hafal ({totalStudents - masteredCount})
-          </button>
-        </div>
+      {/* 1. HEADER RINGKAS (TANPA TOGGLE FILTER) */}
+      <div className="pt-1">
+        <h2 className="text-2xl font-black tracking-tight text-slate-900">
+          Terraquiz
+        </h2>
+        <p className="text-xs text-slate-400 font-medium mt-0.5">
+          Kuis pintar otomatis untuk menghafal 170 rekan angkatan Terravana 2026
+        </p>
       </div>
 
-      {/* 2. STATS METER STRIP (VISILY PASTEL CARDS) */}
-      <div
-        id="terraquiz-meters-strip"
-        className="grid grid-cols-3 gap-3"
-      >
-        {/* KPI Meter */}
-        <div className="bg-emerald-50/80 rounded-3xl p-3.5 border border-emerald-100 flex flex-col justify-between">
-          <div className="flex items-center gap-1 text-[10px] font-extrabold text-emerald-800 uppercase tracking-wider">
-            <Award size={12} className="text-emerald-600" />
-            <span>Target KPI</span>
-          </div>
-          <div className="text-base sm:text-lg font-black text-slate-900 mt-1">
-            {masteredCount}/{totalStudents}
-          </div>
-          <div className="w-full h-1.5 rounded-full bg-emerald-200/80 mt-1.5 overflow-hidden">
-            <div
-              className="h-full bg-emerald-600 rounded-full transition-all"
-              style={{ width: `${kpiPercentage}%` }}
-            />
-          </div>
-          <span className="text-[10px] font-bold text-emerald-700 mt-1">{kpiPercentage}% Tuntas</span>
-        </div>
-
-        {/* Live Streak */}
-        <div className="bg-amber-50/80 rounded-3xl p-3.5 border border-amber-100 flex flex-col justify-between">
-          <div className="flex items-center gap-1 text-[10px] font-extrabold text-amber-800 uppercase tracking-wider">
-            <Flame size={12} className="fill-amber-500 stroke-amber-500" />
-            <span>Streak</span>
-          </div>
-          <div className="text-base sm:text-lg font-black text-slate-900 mt-1 flex items-baseline gap-1">
-            <span>{streak}x</span>
-            {streak >= 5 && (
-              <span className="text-[9px] font-black text-amber-600 animate-pulse">
-                🔥 Hot!
-              </span>
-            )}
-          </div>
-          <span className="text-[10px] font-bold text-amber-700 mt-1">Rekor: {bestStreak}x</span>
-        </div>
-
-        {/* Live Accuracy */}
-        <div className="bg-indigo-50/80 rounded-3xl p-3.5 border border-indigo-100 flex flex-col justify-between">
-          <div className="flex items-center gap-1 text-[10px] font-extrabold text-indigo-800 uppercase tracking-wider">
-            <Zap size={12} className="text-indigo-600" />
-            <span>Akurasi</span>
-          </div>
-          <div className="text-base sm:text-lg font-black text-slate-900 mt-1">
-            {accuracy}%
-          </div>
-          <span className="text-[10px] font-bold text-indigo-700 mt-1">
-            {sessionCorrect}/{sessionTotal} Soal
+      {/* 2. UNIFIED PROGRESS BAR (VISILY STYLE) */}
+      <div className="bg-slate-50 rounded-3xl p-4 border border-slate-100 flex items-center justify-between gap-3 text-xs">
+        {/* KPI Score */}
+        <div className="flex items-center gap-2">
+          <span className="font-extrabold text-slate-900">{masteredCount}/{totalStudents}</span>
+          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-md">
+            {kpiPercentage}% KPI
           </span>
         </div>
+
+        <div className="h-4 w-px bg-slate-200" />
+
+        {/* Live Streak */}
+        <div className="flex items-center gap-1 font-extrabold text-slate-800">
+          <Flame size={14} className="fill-amber-500 text-amber-500" />
+          <span>{streak}x Streak</span>
+        </div>
+
+        <div className="h-4 w-px bg-slate-200" />
+
+        {/* Live Accuracy */}
+        <div className="flex items-center gap-1 font-extrabold text-slate-800">
+          <Zap size={14} className="text-indigo-600" />
+          <span>{accuracy}% Akurasi</span>
+        </div>
       </div>
 
-      {/* 3. CARD-BASED QUIZ CONTAINER (VISILY SOFT SURFACE) */}
+      {/* 3. CARD-BASED QUIZ CONTAINER */}
       <div
         id="terraquiz-card"
         className="bg-white rounded-3xl border border-slate-100 p-5 sm:p-7 shadow-xs flex flex-col items-center"
@@ -267,9 +219,9 @@ export const TerraquizView: React.FC<TerraquizViewProps> = ({
           </p>
         </div>
 
-        {/* 4 Multiple Choice Options */}
-        <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {options.map((option, index) => {
+        {/* 4 Multiple Choice Options (Locked Array) */}
+        <div className="w-full grid grid-cols-1 gap-2.5">
+          {currentOptions.map((option, index) => {
             const letter = String.fromCharCode(65 + index);
             const isSelected = selectedOption === option;
             const isCorrectOption = option === currentStudent.name;
@@ -292,7 +244,6 @@ export const TerraquizView: React.FC<TerraquizViewProps> = ({
             return (
               <motion.button
                 key={option}
-                id={`quiz-option-${letter.toLowerCase()}`}
                 type="button"
                 whileTap={!isAnswered ? { scale: 0.98 } : {}}
                 onClick={() => handleSelectOption(option)}
@@ -357,7 +308,6 @@ export const TerraquizView: React.FC<TerraquizViewProps> = ({
               </div>
 
               <button
-                id="btn-quiz-next"
                 type="button"
                 onClick={handleNextQuestion}
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs transition-all"
@@ -371,8 +321,7 @@ export const TerraquizView: React.FC<TerraquizViewProps> = ({
       </div>
 
       {/* SESSION RESET */}
-      <div className="flex items-center justify-between text-xs text-slate-400 px-1 font-medium">
-        <span>Tips: Latihan rutin 10 menit agar hafal 100% sebelum sidang.</span>
+      <div className="flex justify-end text-xs text-slate-400 px-1 font-medium">
         <button
           type="button"
           onClick={handleResetSession}
