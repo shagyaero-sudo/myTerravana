@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   Search,
   MessageCircle,
@@ -7,7 +7,8 @@ import {
   Grid,
   List,
   CheckCircle2,
-  ChevronRight,
+  ChevronDown,
+  Navigation,
 } from 'lucide-react';
 import { StudentUser, RegionType } from '../types';
 
@@ -37,6 +38,21 @@ export const TerrafinderView: React.FC<TerrafinderViewProps> = ({
   const [selectedRegion, setSelectedRegion] = useState<RegionType>('All');
   const [selectedKelompok, setSelectedKelompok] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  
+  // Custom Dropdown State
+  const [isKelompokDropdownOpen, setIsKelompokDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsKelompokDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Filter mahasiswa berdasarkan pencarian, wilayah, dan kelompok
   const filteredStudents = useMemo(() => {
@@ -55,9 +71,8 @@ export const TerrafinderView: React.FC<TerrafinderViewProps> = ({
         const matchNick = student.nickname.toLowerCase().includes(q);
         const matchNrp = student.nrp.toLowerCase().includes(q);
         const matchAddress = student.kos_address.toLowerCase().includes(q);
-        const matchMajor = student.major.toLowerCase().includes(q);
 
-        if (!matchName && !matchNick && !matchNrp && !matchAddress && !matchMajor) {
+        if (!matchName && !matchNick && !matchNrp && !matchAddress) {
           return false;
         }
       }
@@ -68,7 +83,7 @@ export const TerrafinderView: React.FC<TerrafinderViewProps> = ({
 
   return (
     <div id="terrafinder-view-root" className="max-w-2xl mx-auto space-y-5 pb-36 font-sans">
-      {/* 1. HEADER (BERSIH TANPA BADGE SLOP) */}
+      {/* 1. HEADER (BERSIH & PRESISI) */}
       <div className="flex items-center justify-between pt-1">
         <div>
           <h2 className="text-2xl font-black tracking-tight text-slate-900">
@@ -108,7 +123,7 @@ export const TerrafinderView: React.FC<TerrafinderViewProps> = ({
         </div>
       </div>
 
-      {/* 2. SEARCH BAR & FILTER PILLS */}
+      {/* 2. SEARCH BAR & CUSTOM DROPDOWN MYTERRAVANA */}
       <div className="bg-white rounded-3xl border border-slate-100 p-4 shadow-xs space-y-3">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
           {/* Search Input */}
@@ -127,20 +142,61 @@ export const TerrafinderView: React.FC<TerrafinderViewProps> = ({
             />
           </div>
 
-          {/* Kelompok Select */}
-          <select
-            id="select-kelompok-filter"
-            value={selectedKelompok}
-            onChange={(e) => setSelectedKelompok(e.target.value)}
-            className="px-3 py-2.5 rounded-2xl border border-slate-200/80 bg-slate-50/80 text-xs font-bold text-slate-700 focus:outline-none"
-          >
-            <option value="all">Semua Kelompok (1-12)</option>
-            {Array.from({ length: 12 }).map((_, i) => (
-              <option key={i + 1} value={(i + 1).toString()}>
-                Kelompok {i + 1}
-              </option>
-            ))}
-          </select>
+          {/* CUSTOM DROPDOWN KELOMPOK MYTERRAVANA (NON-NATIVE BROWSER) */}
+          <div className="relative" ref={dropdownRef}>
+            <button
+              type="button"
+              onClick={() => setIsKelompokDropdownOpen(!isKelompokDropdownOpen)}
+              className="w-full sm:w-auto px-4 py-2.5 rounded-2xl border border-slate-200/80 bg-slate-50/80 text-xs font-bold text-slate-800 hover:bg-slate-100 flex items-center justify-between gap-2 transition-all"
+            >
+              <span>
+                {selectedKelompok === 'all'
+                  ? 'Semua Kelompok (1-12)'
+                  : `Kelompok ${selectedKelompok}`}
+              </span>
+              <ChevronDown
+                size={14}
+                className={`text-slate-400 transition-transform ${
+                  isKelompokDropdownOpen ? 'rotate-180' : ''
+                }`}
+              />
+            </button>
+
+            {isKelompokDropdownOpen && (
+              <div className="absolute right-0 mt-1.5 w-52 bg-white rounded-2xl border border-slate-100 shadow-xl py-1.5 z-30 max-h-56 overflow-y-auto font-medium text-xs text-slate-700">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedKelompok('all');
+                    setIsKelompokDropdownOpen(false);
+                  }}
+                  className={`w-full text-left px-3.5 py-2 hover:bg-slate-50 font-bold transition-colors ${
+                    selectedKelompok === 'all' ? 'text-indigo-600 bg-indigo-50/50' : ''
+                  }`}
+                >
+                  Semua Kelompok (1-12)
+                </button>
+                {Array.from({ length: 12 }).map((_, i) => {
+                  const val = (i + 1).toString();
+                  return (
+                    <button
+                      key={val}
+                      type="button"
+                      onClick={() => {
+                        setSelectedKelompok(val);
+                        setIsKelompokDropdownOpen(false);
+                      }}
+                      className={`w-full text-left px-3.5 py-2 hover:bg-slate-50 font-bold transition-colors ${
+                        selectedKelompok === val ? 'text-indigo-600 bg-indigo-50/50' : ''
+                      }`}
+                    >
+                      Kelompok {val}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Region Filter Chips */}
@@ -205,6 +261,9 @@ export const TerrafinderView: React.FC<TerrafinderViewProps> = ({
             const waUrl = `https://wa.me/${student.wa_number}?text=${encodeURIComponent(
               `Halo ${student.nickname}! Aku dari angkatan Terravana 2026 mau koordinasi yaa 🙌`
             )}`;
+            const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+              student.kos_address
+            )}`;
 
             return (
               <div
@@ -257,24 +316,24 @@ export const TerrafinderView: React.FC<TerrafinderViewProps> = ({
                     </span>
                   </div>
 
-                  {/* Alamat & Domisili */}
-                  <div className="mt-3 space-y-1.5 text-xs text-slate-600 bg-slate-50 rounded-2xl p-3 border border-slate-100">
+                  {/* Alamat & Domisili (Tanpa Jurusan, Sejajar Rapi) */}
+                  <div className="mt-3 space-y-2 text-xs text-slate-600 bg-slate-50 rounded-2xl p-3 border border-slate-100">
                     <div className="flex items-start gap-1.5">
                       <MapPin size={13} className="text-slate-400 shrink-0 mt-0.5" />
                       <span className="line-clamp-2 text-[11px] font-medium leading-snug">
                         {student.kos_address}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between text-[10px] text-slate-400 font-bold pt-1.5 border-t border-slate-200/50">
-                      <span>{student.major}</span>
-                      <span className="px-2 py-0.5 rounded-lg bg-white text-slate-700 border border-slate-200/80">
+
+                    <div className="flex items-center justify-end pt-1 border-t border-slate-200/50">
+                      <span className="px-2.5 py-0.5 rounded-lg bg-white text-slate-700 font-bold border border-slate-200/80 text-[10px]">
                         {student.region}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Direct Action Buttons */}
+                {/* Direct Action Buttons (WA, Google Maps & Detail) */}
                 <div className="pt-1 flex items-center gap-2">
                   <a
                     id={`btn-wa-${student.id}`}
@@ -285,6 +344,16 @@ export const TerrafinderView: React.FC<TerrafinderViewProps> = ({
                   >
                     <MessageCircle size={14} />
                     <span>Chat WA</span>
+                  </a>
+
+                  <a
+                    href={mapsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 rounded-2xl text-slate-600 bg-slate-100 hover:bg-slate-200 hover:text-slate-900 transition-colors"
+                    title="Buka Lokasi di Google Maps"
+                  >
+                    <Navigation size={15} />
                   </a>
 
                   <button
@@ -300,7 +369,7 @@ export const TerrafinderView: React.FC<TerrafinderViewProps> = ({
           })}
         </div>
       ) : (
-        /* LIST VIEW (VISILY CLEAN LIST) */
+        /* LIST VIEW */
         <div
           id="student-cards-list"
           className="bg-white rounded-3xl border border-slate-100 divide-y divide-slate-100 shadow-xs overflow-hidden"
@@ -308,6 +377,9 @@ export const TerrafinderView: React.FC<TerrafinderViewProps> = ({
           {filteredStudents.map((student) => {
             const waUrl = `https://wa.me/${student.wa_number}?text=${encodeURIComponent(
               `Halo ${student.nickname}! Aku dari angkatan Terravana 2026 mau koordinasi yaa 🙌`
+            )}`;
+            const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+              student.kos_address
             )}`;
 
             return (
@@ -356,6 +428,16 @@ export const TerrafinderView: React.FC<TerrafinderViewProps> = ({
                   >
                     <MessageCircle size={13} />
                     <span>Chat WA</span>
+                  </a>
+
+                  <a
+                    href={mapsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-1.5 rounded-xl text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
+                    title="Google Maps"
+                  >
+                    <Navigation size={13} />
                   </a>
 
                   <button
