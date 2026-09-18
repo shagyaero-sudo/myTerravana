@@ -10,6 +10,10 @@ import {
   Eye,
   Check,
   Zap,
+  X,
+  Brain,
+  Target,
+  Sparkles,
 } from 'lucide-react';
 import { StudentUser } from '../types';
 
@@ -37,6 +41,7 @@ export const TerraquizView: React.FC<TerraquizViewProps> = ({
   const [currentQuestion, setCurrentQuestion] = useState<QuizQuestion | null>(null);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isAnswered, setIsAnswered] = useState(false);
+  const [isHowToPlayOpen, setIsHowToPlayOpen] = useState(false);
   
   // Stats Sesi
   const [streak, setStreak] = useState(0);
@@ -46,19 +51,19 @@ export const TerraquizView: React.FC<TerraquizViewProps> = ({
   const [showHint, setShowHint] = useState(false);
   const [questionCount, setQuestionCount] = useState(0);
 
-  // FUNGSI BUAT SOAL BARU (Bungkus foto + opsi pilihan dalam 1 paket mati)
+  // FUNGSI BUAT SOAL BARU
   const generateNewQuestion = useCallback(() => {
     if (students.length === 0) return;
 
     let targetStudent: StudentUser | undefined;
 
-    // Cek apakah ada antrean salah jawab
+    // Cek antrean pengulangan (Spaced Repetition / Smart Queue)
     if (reviewQueue.length > 0 && questionCount % 3 === 0) {
       const reviewId = reviewQueue[0];
       targetStudent = students.find((s) => s.id === reviewId);
     }
 
-    // Jika tidak ada di review queue, ambil dari mahasiswa yang belum dihafal / acak
+    // Jika tidak dari review queue, prioritaskan yang belum dihafal
     if (!targetStudent) {
       const unmastered = students.filter((s) => !s.mastered);
       const pool = unmastered.length > 0 ? unmastered : students;
@@ -70,7 +75,7 @@ export const TerraquizView: React.FC<TerraquizViewProps> = ({
     const shuffledOthers = [...others].sort(() => 0.5 - Math.random());
     const wrongOptions = shuffledOthers.slice(0, 3).map((s) => s.name);
 
-    // Combine & lock opsi
+    // Lock opsi jawaban
     const lockedOptions = [targetStudent.name, ...wrongOptions].sort(() => 0.5 - Math.random());
 
     setCurrentQuestion({
@@ -82,7 +87,6 @@ export const TerraquizView: React.FC<TerraquizViewProps> = ({
     setShowHint(false);
   }, [students, reviewQueue, questionCount]);
 
-  // Generate soal pertama pas pertama kali render
   useEffect(() => {
     if (!currentQuestion && students.length > 0) {
       generateNewQuestion();
@@ -104,16 +108,16 @@ export const TerraquizView: React.FC<TerraquizViewProps> = ({
       setSessionCorrect((prev) => prev + 1);
       setSessionTotal((prev) => prev + 1);
 
-      // Hapus dari antrean review kalau benar
+      // Hapus dari antrean review jika benar
       setReviewQueue((prev) => prev.filter((id) => id !== currentQuestion.student.id));
 
-      // Update KPI Angkatan
+      // Update KPI
       onUpdateMastered(currentQuestion.student.id, true);
     } else {
       setStreak(0);
       setSessionTotal((prev) => prev + 1);
 
-      // Masukkan ke antrean review kalau salah
+      // Masukkan ke antrean review jika salah
       if (!reviewQueue.includes(currentQuestion.student.id)) {
         setReviewQueue((prev) => [...prev, currentQuestion.student.id]);
       }
@@ -144,14 +148,25 @@ export const TerraquizView: React.FC<TerraquizViewProps> = ({
 
   return (
     <div id="terraquiz-view-root" className="max-w-2xl mx-auto space-y-5 pb-36 font-sans">
-      {/* 1. HEADER */}
-      <div className="pt-1">
-        <h2 className="text-2xl font-black tracking-tight text-slate-900">
-          Terraquiz
-        </h2>
-        <p className="text-xs text-slate-400 font-medium mt-0.5">
-          Kuis pintar otomatis untuk menghafal 170 rekan angkatan Terravana 2026
-        </p>
+      {/* 1. HEADER + ICON BANTUAN (?) DI POJOK KANAN */}
+      <div className="flex items-center justify-between pt-1">
+        <div>
+          <h2 className="text-2xl font-black tracking-tight text-slate-900">
+            Terraquiz
+          </h2>
+          <p className="text-xs text-slate-400 font-medium mt-0.5">
+            Kuis pintar otomatis untuk menghafal 170 rekan angkatan Terravana 2026
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setIsHowToPlayOpen(true)}
+          className="p-2 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors shrink-0"
+          title="Cara Bermain & Sistematika"
+        >
+          <HelpCircle size={18} />
+        </button>
       </div>
 
       {/* 2. UNIFIED PROGRESS BAR */}
@@ -183,7 +198,7 @@ export const TerraquizView: React.FC<TerraquizViewProps> = ({
         id="terraquiz-card"
         className="bg-white rounded-3xl border border-slate-100 p-5 sm:p-7 shadow-xs flex flex-col items-center"
       >
-        {/* Photo Card dengan Key Unik untuk Cegah Glitch Foto */}
+        {/* Photo Card */}
         <div className="relative mb-5">
           <div className="relative w-44 h-44 sm:w-52 sm:h-52 rounded-3xl overflow-hidden ring-4 ring-slate-100 shadow-xs bg-slate-100">
             <img
@@ -344,6 +359,78 @@ export const TerraquizView: React.FC<TerraquizViewProps> = ({
           <span>Reset Sesi</span>
         </button>
       </div>
+
+      {/* MODAL CARA BERMAIN & SISTEMATIKA */}
+      <AnimatePresence>
+        {isHowToPlayOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl border border-slate-100 space-y-4"
+            >
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                    <Brain size={18} />
+                  </div>
+                  <h3 className="text-base font-extrabold text-slate-900">
+                    Cara Bermain & Sistematika
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsHowToPlayOpen(false)}
+                  className="p-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div className="space-y-3.5 text-xs text-slate-600 font-medium leading-relaxed">
+                <div className="flex items-start gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                  <Target size={18} className="text-indigo-600 shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-extrabold text-slate-900 mb-0.5">Aturan Kuis</h4>
+                    <p className="text-[11px] text-slate-500">
+                      Tebak nama mahasiswa berdasarkan foto yang muncul. Pilih 1 dari 4 pilihan jawaban yang tersedia.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                  <Sparkles size={18} className="text-amber-500 shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-extrabold text-slate-900 mb-0.5">Smart Queue Algorithm</h4>
+                    <p className="text-[11px] text-slate-500">
+                      Jika jawabanmu <strong className="text-rose-600">Salah</strong>, orang tersebut akan otomatis diselipkan kembali dalam 3–5 soal berikutnya sampai kamu berhasil menjawabnya dengan benar.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                  <CheckCircle2 size={18} className="text-emerald-600 shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-extrabold text-slate-900 mb-0.5">KPI Progres Hafalan</h4>
+                    <p className="text-[11px] text-slate-500">
+                      Setiap jawaban yang <strong className="text-emerald-600">Benar</strong> akan otomatis menandai rekan tersebut sebagai "Sudah Hafal" dan menaikkan persentase KPI Angkatanmu.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsHowToPlayOpen(false)}
+                className="w-full py-2.5 rounded-2xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors shadow-xs mt-2"
+              >
+                Paham & Mulai Kuis
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
