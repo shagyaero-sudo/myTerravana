@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Home, MessageSquare, Award, Users } from 'lucide-react';
+import { Home, CheckSquare, Award, Users } from 'lucide-react';
 import { TabType } from '../types';
 
 interface NavbarProps {
@@ -17,7 +17,7 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { id: 'dashboard', label: 'Home', icon: Home },
-  { id: 'tweeterra', label: 'Feed', icon: MessageSquare },
+  { id: 'tasks', label: 'Tasks', icon: CheckSquare },
   { id: 'terraquiz', label: 'Quiz', icon: Award },
   { id: 'terrafinder', label: 'Finder', icon: Users },
 ];
@@ -72,7 +72,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   )}
               </span>
 
-              {/* LABEL TEKS: SEMBUNYI DI HP (hidden), MUNCUL DI DESKTOP (sm:inline-block) */}
+              {/* LABEL TEKS */}
               <span className="relative z-10 whitespace-nowrap tracking-tight font-medium hidden sm:inline-block">
                 {item.label}
               </span>
