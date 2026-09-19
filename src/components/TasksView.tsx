@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   ArrowLeft,
@@ -6,14 +6,12 @@ import {
   Calendar as CalendarIcon,
   Clock,
   X,
-  Star,
   CheckCircle2,
   Circle,
   ChevronLeft,
   ChevronRight,
-  ChevronDown,
-  Info,
   ExternalLink,
+  RotateCcw,
 } from 'lucide-react';
 import { StudentUser } from '../types';
 
@@ -41,7 +39,17 @@ const toIsoString = (date: Date) => {
   return `${y}-${m}-${d}`;
 };
 
-// Helper untuk Render Text dengan Clickable Links
+// Helper Format Tanggal Indonesia
+const formatIndonesianDate = (date: Date) => {
+  const days = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+  const months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+    'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
+  ];
+  return `${days[date.getDay()]}, ${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+};
+
+// Helper Render Link Clickable
 const renderTextWithLinks = (text: string) => {
   const urlRegex = /(https?:\/\/[^\s]+)/g;
   const parts = text.split(urlRegex);
@@ -70,15 +78,12 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
   const today = new Date();
   const todayIso = toIsoString(today);
 
-  // Active Date State (Default: Hari ini)
+  // Active States
   const [selectedDateIso, setSelectedDateIso] = useState<string>(todayIso);
-  const [baseDateForStrip, setBaseDateForStrip] = useState<Date>(today);
-
-  // Categories State
   const [categories, setCategories] = useState<string[]>(['Work', 'Personal', 'Organisasi']);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
-  // Modal States
+  // Modals
   const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedDetailTask, setSelectedDetailTask] = useState<ScheduledTask | null>(null);
@@ -93,7 +98,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
   const [newCategory, setNewCategory] = useState('Work');
   const [newPriority, setNewPriority] = useState<'Low' | 'Medium' | 'High'>('Medium');
 
-  // Calendar Picker State
+  // Calendar State
   const [calendarViewMonth, setCalendarViewMonth] = useState(today.getMonth());
   const [calendarViewYear, setCalendarViewYear] = useState(today.getFullYear());
 
@@ -131,35 +136,33 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
     },
   ]);
 
-  // Infinite Date Strip Generator (15 Hari disekitar baseDate)
+  // Infinite Swipe Date Generator (-30 Hari sampai +60 Hari)
   const dateStrip = useMemo(() => {
     const list = [];
-    for (let i = -7; i <= 7; i++) {
-      const d = new Date(baseDateForStrip);
+    const base = new Date();
+    for (let i = -30; i <= 60; i++) {
+      const d = new Date(base);
       d.setDate(d.getDate() + i);
       const iso = toIsoString(d);
-      const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
+      const dayIndex = d.getDay();
+      
+      const dayNamesIndo = ['MIN', 'SEN', 'SEL', 'RAB', 'KAM', 'JUM', 'SAB'];
+      const dayName = dayNamesIndo[dayIndex];
       const dayNum = d.getDate();
-      list.push({ dateObj: d, iso, dayName, dayNum });
+      const isSunday = dayIndex === 0;
+
+      list.push({ dateObj: d, iso, dayName, dayNum, isSunday });
     }
     return list;
-  }, [baseDateForStrip]);
+  }, []);
 
-  // Shifts Date Strip
-  const shiftStrip = (days: number) => {
-    const newBase = new Date(baseDateForStrip);
-    newBase.setDate(newBase.getDate() + days);
-    setBaseDateForStrip(newBase);
-  };
-
-  // Toggle Status Completed (Checked Effect)
+  // Handlers
   const handleToggleComplete = (taskId: string) => {
     setTasks((prev) =>
       prev.map((t) => (t.id === taskId ? { ...t, isCompleted: !t.isCompleted } : t))
     );
   };
 
-  // Handler Add Category Baru
   const handleAddCustomCategory = () => {
     if (customCatInput.trim() && !categories.includes(customCatInput.trim())) {
       const updated = [...categories, customCatInput.trim()];
@@ -170,7 +173,6 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
     }
   };
 
-  // Handler Create Task
   const handleCreateTask = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTitle.trim()) return;
@@ -195,64 +197,55 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
     setTasks([...tasks, newTask]);
     setSelectedDateIso(newDate);
 
-    // Reset Form
     setNewTitle('');
     setNewDesc('');
     setIsAddModalOpen(false);
   };
 
-  // Filter Tasks berdasarkan tanggal dan kategori
   const tasksForSelectedDate = tasks.filter((t) => {
     const matchesDate = t.dateIso === selectedDateIso;
     const matchesCat = selectedCategory === 'All' || t.category === selectedCategory;
     return matchesDate && matchesCat;
   });
 
-  // Display Format Date Active Header
   const activeDateObj = new Date(selectedDateIso);
-  const activeDateFormatted = activeDateObj.toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
+  const activeDateFormatted = formatIndonesianDate(activeDateObj);
+  const isViewingToday = selectedDateIso === todayIso;
 
-  // Calendar Calculation Helpers
+  // Calendar Calc
   const daysInMonth = new Date(calendarViewYear, calendarViewMonth + 1, 0).getDate();
   const firstDayOfWeek = new Date(calendarViewYear, calendarViewMonth, 1).getDay();
 
   return (
     <div id="tasks-schedule-root" className="max-w-md mx-auto space-y-5 pt-2 pb-36 font-sans">
-      {/* 1. TOP HEADER (BACK, DATE DISPLAY, ADD BUTTON) */}
-      <div className="flex items-center justify-between">
+      {/* 1. BAR PALING ATAS REVISI 7: (<-) | (Today: Sab, 19 Sept 2026) | (+) */}
+      <div className="flex items-center justify-between gap-2">
         <button
           type="button"
-          onClick={() => {
-            setSelectedDateIso(todayIso);
-            setBaseDateForStrip(today);
-          }}
-          className="px-3 py-1.5 rounded-full bg-white/80 border border-slate-100 flex items-center gap-1 text-slate-700 text-xs font-bold shadow-2xs hover:bg-white"
+          onClick={() => setSelectedDateIso(todayIso)}
+          className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-700 shadow-2xs hover:bg-slate-50 transition-colors"
           title="Kembali ke Hari Ini"
         >
-          <ArrowLeft size={14} />
-          <span>Today</span>
+          <ArrowLeft size={18} />
         </button>
 
-        <span className="text-xs font-black text-slate-800 tracking-tight">
-          {activeDateFormatted}
-        </span>
+        <div className="px-4 py-2 rounded-full bg-white border border-slate-200 shadow-2xs text-center">
+          <span className="text-xs font-black text-slate-900 tracking-tight">
+            Today: {formatIndonesianDate(today)}
+          </span>
+        </div>
 
         <button
           type="button"
           onClick={() => setIsAddModalOpen(true)}
           className="w-10 h-10 rounded-full bg-[#7C5CFC] text-white flex items-center justify-center shadow-md shadow-purple-200/60 hover:scale-105 transition-all"
-          title="Add Task"
+          title="Tambah Task Baru"
         >
           <Plus size={20} />
         </button>
       </div>
 
-      {/* 2. TITLE & CALENDAR POPUP BUTTON */}
+      {/* 2. TITLE & KALENDER POPUP BUTTON */}
       <div className="flex items-end justify-between pt-1">
         <div>
           <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none">
@@ -273,17 +266,9 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
         </button>
       </div>
 
-      {/* 3. REAL-TIME INFINITE SWIPE DATE STRIP */}
-      <div className="relative flex items-center gap-1 pt-1">
-        <button
-          type="button"
-          onClick={() => shiftStrip(-7)}
-          className="p-1 rounded-full text-slate-400 hover:text-slate-800 shrink-0"
-        >
-          <ChevronLeft size={18} />
-        </button>
-
-        <div className="flex-1 flex items-center gap-1.5 overflow-x-auto scrollbar-none py-1 px-0.5">
+      {/* 3. REAL-TIME INFINITE SWIPE DATE STRIP (SWIPEABLE & TODAY ON LEFT) */}
+      <div className="pt-1">
+        <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-1.5 px-0.5 touch-pan-x">
           {dateStrip.map((item) => {
             const isActive = selectedDateIso === item.iso;
             const isToday = item.iso === todayIso;
@@ -293,18 +278,28 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
                 key={item.iso}
                 type="button"
                 onClick={() => setSelectedDateIso(item.iso)}
-                className={`flex-1 min-w-[46px] py-3 rounded-2xl flex flex-col items-center justify-center transition-all shrink-0 relative ${
+                className={`flex-1 min-w-[50px] py-3.5 rounded-2xl flex flex-col items-center justify-center transition-all shrink-0 relative ${
                   isActive
                     ? 'bg-[#1E1B26] text-white shadow-md scale-105 font-bold'
-                    : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-100'
+                    : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200'
                 }`}
               >
-                <span className="text-[10px] font-bold opacity-70 block uppercase">
+                <span
+                  className={`text-[10px] font-black block uppercase ${
+                    item.isSunday && !isActive ? 'text-rose-500' : ''
+                  }`}
+                >
                   {item.dayName}
                 </span>
-                <span className="text-sm font-black mt-0.5">{item.dayNum}</span>
+                <span
+                  className={`text-sm font-black mt-0.5 ${
+                    item.isSunday && !isActive ? 'text-rose-600' : ''
+                  }`}
+                >
+                  {item.dayNum}
+                </span>
 
-                {/* Dot Hari Ini */}
+                {/* Dot penanda Hari Ini */}
                 {isToday && !isActive && (
                   <span className="absolute bottom-1 w-1.5 h-1.5 bg-purple-600 rounded-full" />
                 )}
@@ -312,17 +307,9 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
             );
           })}
         </div>
-
-        <button
-          type="button"
-          onClick={() => shiftStrip(7)}
-          className="p-1 rounded-full text-slate-400 hover:text-slate-800 shrink-0"
-        >
-          <ChevronRight size={18} />
-        </button>
       </div>
 
-      {/* 4. CATEGORY PILL FILTERS (+ CUSTOM ADD) */}
+      {/* 4. CATEGORY FILTERS (REVISI 3: TANPA +CUSTOM) */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none pt-1">
         <button
           type="button"
@@ -333,7 +320,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
               : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
           }`}
         >
-          All
+          Semua
         </button>
 
         {categories.map((cat) => {
@@ -353,16 +340,22 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
             </button>
           );
         })}
-
-        <button
-          type="button"
-          onClick={() => setIsAddingCustomCategory(true)}
-          className="px-3.5 py-2 rounded-full bg-purple-50 text-purple-700 border border-purple-200 text-xs font-bold hover:bg-purple-100 transition-colors shrink-0 flex items-center gap-1"
-        >
-          <Plus size={13} />
-          <span>Custom</span>
-        </button>
       </div>
+
+      {/* REVISI 9: NOTIFIKASI MEMILIH TANGGAL LAIN + OPTION KEMBALI */}
+      {!isViewingToday && (
+        <div className="bg-amber-50 border border-amber-200 p-3 rounded-2xl flex items-center justify-between text-amber-950 text-xs font-bold shadow-2xs">
+          <span>Menampilkan: {activeDateFormatted}</span>
+          <button
+            type="button"
+            onClick={() => setSelectedDateIso(todayIso)}
+            className="px-2.5 py-1 rounded-xl bg-amber-900 text-white text-[10px] font-black flex items-center gap-1 hover:bg-amber-950 transition-colors"
+          >
+            <RotateCcw size={11} />
+            <span>Ke Hari Ini</span>
+          </button>
+        </div>
+      )}
 
       {/* 5. TIME SLOT & TIMELINE TASKS */}
       <div className="pt-2 space-y-4">
@@ -402,7 +395,6 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
                       ● {task.category}
                     </span>
 
-                    {/* Tombol Details > */}
                     <button
                       type="button"
                       onClick={() => setSelectedDetailTask(task)}
@@ -412,7 +404,6 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
                     </button>
                   </div>
 
-                  {/* Title dengan efek Strikethrough jika Selesai */}
                   <h3
                     className={`text-sm font-black text-slate-900 leading-snug ${
                       task.isCompleted ? 'line-through text-slate-400' : ''
@@ -421,7 +412,6 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
                     {task.title}
                   </h3>
 
-                  {/* Deskripsi Singkat */}
                   {task.description && (
                     <p className="text-xs text-slate-500 font-medium line-clamp-2 leading-relaxed">
                       {renderTextWithLinks(task.description)}
@@ -429,7 +419,6 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
                   )}
                 </div>
 
-                {/* Bottom Row Card: Tombol Checked / Tandai Selesai */}
                 <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
                   <span className="text-[10px] font-bold text-slate-400">
                     {task.isCompleted ? 'Tugas Selesai' : 'Belum Selesai'}
@@ -465,7 +454,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
             <Clock size={32} className="mx-auto text-slate-300" />
             <h4 className="text-sm font-black text-slate-700">Tidak Ada Tugas Hari Ini</h4>
             <p className="text-xs text-slate-400 font-medium">
-              Gunakan waktu luang untuk istirahat atau buat catatan tugas baru.
+              Gunakan waktu luang untuk istirahat atau catat agenda baru.
             </p>
           </div>
         )}
@@ -475,7 +464,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
       {/* MODAL LAYER HIGHEST (z-[100]) UNTUK MENUTUP TOTAL NAV DOCK */}
       {/* ========================================================= */}
 
-      {/* MODAL POPUP KALENDER UTUH */}
+      {/* MODAL POPUP KALENDER UTUH (REVISI 4, 5, 6) */}
       <AnimatePresence>
         {isCalendarModalOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
@@ -488,7 +477,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
               {/* Header Kalender */}
               <div className="flex items-center justify-between">
                 <h3 className="text-base font-black text-slate-900">
-                  {new Date(calendarViewYear, calendarViewMonth).toLocaleDateString('en-US', {
+                  {new Date(calendarViewYear, calendarViewMonth).toLocaleDateString('id-ID', {
                     month: 'long',
                     year: 'numeric',
                   })}
@@ -532,24 +521,30 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
                 </div>
               </div>
 
-              {/* Grid Hari Kalender */}
-              <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-black text-slate-400 uppercase">
-                <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+              {/* Grid Header Hari (MIN Merah) */}
+              <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-black uppercase">
+                <span className="text-rose-600">MIN</span>
+                <span className="text-slate-400">SEN</span>
+                <span className="text-slate-400">SEL</span>
+                <span className="text-slate-400">RAB</span>
+                <span className="text-slate-400">KAM</span>
+                <span className="text-slate-400">JUM</span>
+                <span className="text-slate-400">SAB</span>
               </div>
 
+              {/* Grid Tanggal Kalender */}
               <div className="grid grid-cols-7 gap-1 text-center">
-                {/* Empty cells */}
                 {Array.from({ length: firstDayOfWeek }).map((_, i) => (
                   <div key={`empty-${i}`} className="h-9" />
                 ))}
 
-                {/* Day numbers */}
                 {Array.from({ length: daysInMonth }).map((_, i) => {
                   const dayNum = i + 1;
                   const dateObj = new Date(calendarViewYear, calendarViewMonth, dayNum);
                   const iso = toIsoString(dateObj);
                   const isSelected = iso === selectedDateIso;
                   const isToday = iso === todayIso;
+                  const isSunday = dateObj.getDay() === 0;
                   const hasTasks = tasks.some((t) => t.dateIso === iso);
 
                   return (
@@ -558,39 +553,45 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
                       type="button"
                       onClick={() => {
                         setSelectedDateIso(iso);
-                        setBaseDateForStrip(dateObj);
                         setIsCalendarModalOpen(false);
                       }}
-                      className={`h-9 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center relative ${
+                      className={`h-9 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center relative border ${
                         isSelected
-                          ? 'bg-[#1E1B26] text-white font-black shadow-xs'
+                          ? 'bg-[#1E1B26] text-white border-[#1E1B26] font-black shadow-xs'
                           : isToday
-                          ? 'bg-purple-100 text-purple-900 font-extrabold'
-                          : 'hover:bg-slate-100 text-slate-800'
+                          ? 'bg-purple-100 text-purple-900 border-purple-200 font-extrabold'
+                          : isSunday
+                          ? 'text-rose-600 border-transparent hover:bg-rose-50'
+                          : 'border-transparent hover:bg-slate-100 text-slate-800'
                       }`}
                     >
                       <span>{dayNum}</span>
-                      {hasTasks && !isSelected && (
-                        <span className="w-1 h-1 bg-purple-500 rounded-full mt-0.5" />
+
+                      {/* REVISI 5: Indikator Outline/Dot jika ada Task */}
+                      {hasTasks && (
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full absolute bottom-0.5 ${
+                            isSelected ? 'bg-amber-400' : 'bg-purple-600 ring-1 ring-purple-200'
+                          }`}
+                        />
                       )}
                     </button>
                   );
                 })}
               </div>
 
-              <button
-                type="button"
-                onClick={() => setIsCalendarModalOpen(false)}
-                className="w-full py-2.5 rounded-2xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-colors"
-              >
-                Pilih Tanggal Ini
-              </button>
+              {/* REVISI 4: Notes Kecil di Bawah Kalender */}
+              <div className="pt-2 text-center border-t border-slate-100">
+                <p className="text-[10px] font-semibold text-slate-400">
+                  💡 Klik tanggal ber-indikator dot untuk melihat agenda tugas di hari tersebut.
+                </p>
+              </div>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
 
-      {/* MODAL DETAIL TASK DESKRIPSI (WITH CLICKABLE LINKS) */}
+      {/* MODAL DETAIL TASK DESKRIPSI */}
       <AnimatePresence>
         {selectedDetailTask && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
@@ -685,7 +686,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
         )}
       </AnimatePresence>
 
-      {/* MODAL ADD NEW TASK */}
+      {/* MODAL ADD NEW TASK (REVISI 10: TANPA CENTANG POJOK) */}
       <AnimatePresence>
         {isAddModalOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
@@ -703,25 +704,19 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
                 >
                   <X size={20} />
                 </button>
-                <h3 className="text-base font-black text-slate-900">Add New Task</h3>
-                <button
-                  type="button"
-                  onClick={handleCreateTask}
-                  className="w-7 h-7 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-bold"
-                >
-                  ✓
-                </button>
+                <h3 className="text-base font-black text-slate-900">Tambah Task Baru</h3>
+                <div className="w-5" />
               </div>
 
               <form onSubmit={handleCreateTask} className="space-y-4">
                 <div className="space-y-1">
                   <label className="text-xs font-black text-slate-800 block">
-                    Task Title
+                    Judul Task
                   </label>
                   <input
                     type="text"
                     required
-                    placeholder="Finish landing page design"
+                    placeholder="Contoh: Finish landing page design"
                     value={newTitle}
                     onChange={(e) => setNewTitle(e.target.value)}
                     className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none"
@@ -730,7 +725,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
 
                 <div className="space-y-1">
                   <label className="text-xs font-black text-slate-800 block">
-                    Description & Link (Zoom/GMeet/Drive)
+                    Deskripsi & Link (Zoom/GMeet/Drive)
                   </label>
                   <textarea
                     rows={3}
@@ -743,7 +738,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
 
                 <div className="space-y-1">
                   <label className="text-xs font-black text-slate-800 block">
-                    Due Date & Time
+                    Tanggal & Jam Deadline
                   </label>
                   <div className="grid grid-cols-2 gap-2">
                     <input
@@ -763,7 +758,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-black text-slate-800 block">
-                    Priority
+                    Prioritas
                   </label>
                   <div className="grid grid-cols-3 gap-2">
                     {(['Low', 'Medium', 'High'] as const).map((p) => {
@@ -790,17 +785,18 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
                   </div>
                 </div>
 
+                {/* REVISI 3: Tambah Custom Category di Modal */}
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-black text-slate-800 block">
-                      Project / Category
+                      Project / Kategori
                     </label>
                     <button
                       type="button"
                       onClick={() => setIsAddingCustomCategory(true)}
                       className="text-[10px] font-black text-purple-600 hover:underline"
                     >
-                      + Custom Category
+                      + Tambah Custom Kategori
                     </button>
                   </div>
                   <select
@@ -820,7 +816,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
                   type="submit"
                   className="w-full py-3.5 rounded-2xl bg-[#7C5CFC] text-white text-xs font-black hover:bg-purple-600 transition-colors shadow-lg shadow-purple-200/60 mt-2"
                 >
-                  Create Task
+                  Buat Task
                 </button>
               </form>
             </motion.div>
