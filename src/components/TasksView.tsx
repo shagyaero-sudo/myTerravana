@@ -12,12 +12,19 @@ import {
   ChevronRight,
   ExternalLink,
   RotateCcw,
+  CalendarDays,
+  CheckSquare,
+  MapPin,
 } from 'lucide-react';
 import { StudentUser } from '../types';
 
+export type AgendaType = 'task' | 'event';
+
 export interface ScheduledTask {
   id: string;
+  type: AgendaType; // 'task' (Tugas/Deadline) atau 'event' (Event/Jadwal)
   time: string;
+  endTime?: string;
   title: string;
   description: string;
   category: string;
@@ -90,11 +97,13 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
   const [isAddingCustomCategory, setIsAddingCustomCategory] = useState(false);
   const [customCatInput, setCustomCatInput] = useState('');
 
-  // Form States
+  // Form States untuk Add Agenda
+  const [newType, setNewType] = useState<AgendaType>('task');
   const [newTitle, setNewTitle] = useState('');
   const [newDesc, setNewDesc] = useState('');
   const [newDate, setNewDate] = useState(todayIso);
   const [newTime, setNewTime] = useState('09:00');
+  const [newEndTime, setNewEndTime] = useState('10:30');
   const [newCategory, setNewCategory] = useState('Work');
   const [newPriority, setNewPriority] = useState<'Low' | 'Medium' | 'High'>('Medium');
 
@@ -106,7 +115,9 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
   const [tasks, setTasks] = useState<ScheduledTask[]>([
     {
       id: 'st-1',
+      type: 'event',
       time: '09:00 AM',
+      endTime: '10:30 AM',
       title: 'Meeting dengan Dosen Pembimbing',
       description: 'Diskusi progres PKM-RSH dan rekap data. Link Zoom: https://zoom.us/j/123456789',
       category: 'Work',
@@ -116,7 +127,8 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
     },
     {
       id: 'st-2',
-      time: '11:00 AM',
+      type: 'task',
+      time: '11:59 PM',
       title: 'Pengerjaan Desain Landing Page',
       description: 'Review UI komponen Soft Clay di Figma dan koordinasi dengan tim dev.',
       category: 'Work',
@@ -126,7 +138,8 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
     },
     {
       id: 'st-3',
-      time: '02:30 PM',
+      type: 'task',
+      time: '05:00 PM',
       title: 'Bayar Iuran Kas Angkatan',
       description: 'Transfer ke bendahara Terravana via QRIS / Bank Mandiri.',
       category: 'Personal',
@@ -136,11 +149,11 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
     },
   ]);
 
-  // REVISI 2: IDEAL STATE DATE STRIP (HARI INI DI PALING POJOK KIRI, BERLANJUT KE DEPAN)
+  // Date Strip Generator
   const dateStrip = useMemo(() => {
     const list = [];
-    const base = new Date(); // Hari ini
-    for (let i = 0; i <= 60; i++) { // Dimulai dari 0 (Hari Ini) ke depan
+    const base = new Date();
+    for (let i = 0; i <= 60; i++) {
       const d = new Date(base);
       d.setDate(d.getDate() + i);
       const iso = toIsoString(d);
@@ -177,15 +190,23 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
     e.preventDefault();
     if (!newTitle.trim()) return;
 
-    const [hrs, mins] = newTime.split(':');
-    const hourNum = parseInt(hrs, 10);
-    const ampm = hourNum >= 12 ? 'PM' : 'AM';
-    const displayHour = hourNum % 12 || 12;
-    const formattedTime = `${String(displayHour).padStart(2, '0')}:${mins} ${ampm}`;
+    // Convert Time format
+    const formatTime12 = (time24: string) => {
+      const [hrs, mins] = time24.split(':');
+      const hourNum = parseInt(hrs, 10);
+      const ampm = hourNum >= 12 ? 'PM' : 'AM';
+      const displayHour = hourNum % 12 || 12;
+      return `${String(displayHour).padStart(2, '0')}:${mins} ${ampm}`;
+    };
+
+    const formattedStartTime = formatTime12(newTime);
+    const formattedEndTime = newType === 'event' ? formatTime12(newEndTime) : undefined;
 
     const newTask: ScheduledTask = {
       id: `st-${Date.now()}`,
-      time: formattedTime,
+      type: newType,
+      time: formattedStartTime,
+      endTime: formattedEndTime,
       title: newTitle,
       description: newDesc,
       category: newCategory,
@@ -218,7 +239,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
 
   return (
     <div id="tasks-schedule-root" className="max-w-md mx-auto space-y-5 pt-2 pb-36 font-sans">
-      {/* 1. TOP BAR */}
+      {/* 1. BAR PALING ATAS: (<-) | (Today: Sab, 19 Sept 2026) | (+) */}
       <div className="flex items-center justify-between gap-2">
         <button
           type="button"
@@ -239,7 +260,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
           type="button"
           onClick={() => setIsAddModalOpen(true)}
           className="w-10 h-10 rounded-full bg-[#7C5CFC] text-white flex items-center justify-center shadow-md shadow-purple-200/60 hover:scale-105 transition-all"
-          title="Tambah Task Baru"
+          title="Tambah Agenda Baru"
         >
           <Plus size={20} />
         </button>
@@ -249,7 +270,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
       <div className="flex items-end justify-between pt-1">
         <div>
           <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none">
-            Task
+            Task & Event
           </h1>
           <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none mt-1">
             Schedule
@@ -266,7 +287,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
         </button>
       </div>
 
-      {/* 3. REVISI 2: SCROLLABLE DATE STRIP (HARI INI DI POJOK KIRI EKSISTING) */}
+      {/* 3. SCROLLABLE DATE STRIP */}
       <div className="pt-1">
         <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-1.5 px-0.5 touch-pan-x">
           {dateStrip.map((item) => {
@@ -356,12 +377,12 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
         </div>
       )}
 
-      {/* 5. TIME SLOT & TIMELINE TASKS */}
+      {/* 5. TIMELINE LIST (TASK VS EVENT DIFFERENTIATED) */}
       <div className="pt-2 space-y-4">
         {tasksForSelectedDate.length > 0 ? (
           tasksForSelectedDate.map((task) => (
             <div key={task.id} className="flex items-start gap-3">
-              {/* Left Column: Time */}
+              {/* Left Column: Time Slot */}
               <div className="w-14 shrink-0 text-center pt-1">
                 <span className="text-xs font-black text-slate-900 block leading-tight">
                   {task.time.split(' ')[0]}
@@ -372,47 +393,64 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
                 <div className="w-0.5 h-10 bg-slate-200 mx-auto my-2 rounded-full opacity-60" />
               </div>
 
-              {/* Right Column: Task Card */}
+              {/* Right Column: Card */}
               <div
-                className={`flex-1 rounded-[28px] p-4 border transition-all space-y-2.5 shadow-xs ${
-                  task.isCompleted
+                className={`flex-1 rounded-[28px] p-4 border transition-all space-y-2.5 shadow-xs relative ${
+                  task.type === 'event'
+                    ? 'bg-blue-50/50 border-blue-200/80'
+                    : task.isCompleted
                     ? 'bg-slate-50/80 border-slate-200 opacity-60'
                     : 'bg-white border-slate-100'
                 }`}
               >
                 <div className="space-y-1">
                   <div className="flex items-center justify-between gap-2">
-                    <span
-                      className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
-                        task.priority === 'High'
-                          ? 'bg-rose-100 text-rose-700'
-                          : task.priority === 'Medium'
-                          ? 'bg-amber-100 text-amber-800'
-                          : 'bg-emerald-100 text-emerald-800'
-                      }`}
-                    >
-                      ● {task.category}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      {/* Badge Tipe Agenda */}
+                      {task.type === 'event' ? (
+                        <span className="px-2 py-0.5 rounded-full bg-blue-600 text-white text-[9px] font-black uppercase tracking-wider flex items-center gap-1">
+                          <CalendarDays size={10} />
+                          <span>EVENT</span>
+                        </span>
+                      ) : (
+                        <span
+                          className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
+                            task.priority === 'High'
+                              ? 'bg-rose-100 text-rose-700'
+                              : task.priority === 'Medium'
+                              ? 'bg-amber-100 text-amber-800'
+                              : 'bg-emerald-100 text-emerald-800'
+                          }`}
+                        >
+                          ● {task.category}
+                        </span>
+                      )}
+
+                      {task.type === 'event' && (
+                        <span className="text-[9px] font-extrabold text-blue-900">
+                          {task.time} {task.endTime ? `- ${task.endTime}` : ''}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   <h3
                     className={`text-sm font-black text-slate-900 leading-snug ${
-                      task.isCompleted ? 'line-through text-slate-400' : ''
+                      task.type === 'task' && task.isCompleted ? 'line-through text-slate-400' : ''
                     }`}
                   >
                     {task.title}
                   </h3>
 
                   {task.description && (
-                    <p className="text-xs text-slate-500 font-medium line-clamp-2 leading-relaxed">
+                    <p className="text-xs text-slate-600 font-medium line-clamp-2 leading-relaxed">
                       {renderTextWithLinks(task.description)}
                     </p>
                   )}
                 </div>
 
-                {/* REVISI 3: BOTTOM ROW CARD (DETAILS > DI POJOK KIRI BAWAH) */}
-                <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
-                  {/* Posisikan Details > di Kiri Bawah */}
+                {/* Bottom Row Card */}
+                <div className="pt-2 border-t border-slate-100/80 flex items-center justify-between">
                   <button
                     type="button"
                     onClick={() => setSelectedDetailTask(task)}
@@ -421,27 +459,35 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
                     Details &gt;
                   </button>
 
-                  <button
-                    type="button"
-                    onClick={() => handleToggleComplete(task.id)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 ${
-                      task.isCompleted
-                        ? 'bg-emerald-500 text-white shadow-xs'
-                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                    }`}
-                  >
-                    {task.isCompleted ? (
-                      <>
-                        <CheckCircle2 size={14} />
-                        <span>Checked ✓</span>
-                      </>
-                    ) : (
-                      <>
-                        <Circle size={14} />
-                        <span>Tandai Selesai</span>
-                      </>
-                    )}
-                  </button>
+                  {/* Jika Tipe TUGAS: Munculkan Tombol Checked */}
+                  {task.type === 'task' ? (
+                    <button
+                      type="button"
+                      onClick={() => handleToggleComplete(task.id)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 ${
+                        task.isCompleted
+                          ? 'bg-emerald-500 text-white shadow-xs'
+                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      }`}
+                    >
+                      {task.isCompleted ? (
+                        <>
+                          <CheckCircle2 size={14} />
+                          <span>Checked ✓</span>
+                        </>
+                      ) : (
+                        <>
+                          <Circle size={14} />
+                          <span>Tandai Selesai</span>
+                        </>
+                      )}
+                    </button>
+                  ) : (
+                    /* Jika Tipe EVENT: Tampilkan Tag Informasi Jadwal */
+                    <span className="text-[10px] font-extrabold text-blue-700 bg-blue-100/80 px-2.5 py-1 rounded-xl">
+                      📅 Jadwal Acara
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -449,17 +495,19 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
         ) : (
           <div className="text-center py-12 bg-white rounded-[32px] border border-dashed border-slate-200 p-6 space-y-2">
             <Clock size={32} className="mx-auto text-slate-300" />
-            <h4 className="text-sm font-black text-slate-700">Tidak Ada Tugas Hari Ini</h4>
+            <h4 className="text-sm font-black text-slate-700">Tidak Ada Agenda Hari Ini</h4>
             <p className="text-xs text-slate-400 font-medium">
-              Gunakan waktu luang untuk istirahat atau catat agenda baru.
+              Gunakan waktu luang untuk istirahat atau catat tugas/event baru.
             </p>
           </div>
         )}
       </div>
 
       {/* ========================================================= */}
-      {/* MODAL POPUP KALENDER UTUH (z-[100]) */}
+      {/* MODALS SECTION (z-[100] & z-[120]) */}
       {/* ========================================================= */}
+
+      {/* MODAL POPUP KALENDER UTUH */}
       <AnimatePresence>
         {isCalendarModalOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
@@ -573,7 +621,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
 
               <div className="pt-2 text-center border-t border-slate-100">
                 <p className="text-[10px] font-semibold text-slate-400">
-                  💡 Klik tanggal ber-indikator dot untuk melihat agenda tugas di hari tersebut.
+                  💡 Klik tanggal ber-indikator dot untuk melihat agenda tugas/event di hari tersebut.
                 </p>
               </div>
             </motion.div>
@@ -581,7 +629,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
         )}
       </AnimatePresence>
 
-      {/* MODAL DETAIL TASK DESKRIPSI (z-[100]) */}
+      {/* MODAL DETAIL TASK DESKRIPSI */}
       <AnimatePresence>
         {selectedDetailTask && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
@@ -592,9 +640,18 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
               className="w-full max-w-md bg-white rounded-[36px] p-6 shadow-2xl border border-slate-100 space-y-4"
             >
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <span className="px-3 py-1 rounded-full bg-purple-100 text-purple-800 text-[10px] font-extrabold">
-                  {selectedDetailTask.category}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`px-3 py-1 rounded-full text-[10px] font-extrabold ${
+                      selectedDetailTask.type === 'event'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-purple-100 text-purple-800'
+                    }`}
+                  >
+                    {selectedDetailTask.type === 'event' ? '📅 EVENT / JADWAL' : selectedDetailTask.category}
+                  </span>
+                </div>
+
                 <button
                   type="button"
                   onClick={() => setSelectedDetailTask(null)}
@@ -610,7 +667,10 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
                 </h3>
                 <div className="flex items-center gap-2 text-xs font-bold text-slate-400">
                   <Clock size={13} />
-                  <span>{selectedDetailTask.dateIso} • {selectedDetailTask.time}</span>
+                  <span>
+                    {selectedDetailTask.dateIso} • {selectedDetailTask.time}
+                    {selectedDetailTask.endTime ? ` - ${selectedDetailTask.endTime}` : ''}
+                  </span>
                 </div>
               </div>
 
@@ -637,7 +697,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
         )}
       </AnimatePresence>
 
-      {/* REVISI 1: MODAL ADD CUSTOM CATEGORY (HIGHEST LAYER z-[120]) */}
+      {/* MODAL ADD CUSTOM CATEGORY (HIGHEST LAYER z-[120]) */}
       <AnimatePresence>
         {isAddingCustomCategory && (
           <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md">
@@ -676,7 +736,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
         )}
       </AnimatePresence>
 
-      {/* MODAL ADD NEW TASK (z-[100]) */}
+      {/* MODAL ADD NEW TASK / EVENT WITH SEGMENTED SWITCH */}
       <AnimatePresence>
         {isAddModalOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
@@ -694,19 +754,52 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
                 >
                   <X size={20} />
                 </button>
-                <h3 className="text-base font-black text-slate-900">Tambah Task Baru</h3>
+                <h3 className="text-base font-black text-slate-900">Tambah Agenda Baru</h3>
                 <div className="w-5" />
+              </div>
+
+              {/* SEGMENTED SWITCH: TUGAS / DEADLINE VS EVENT / ACARA */}
+              <div className="bg-slate-100 p-1 rounded-2xl flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setNewType('task')}
+                  className={`flex-1 py-2.5 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
+                    newType === 'task'
+                      ? 'bg-slate-900 text-white shadow-xs'
+                      : 'text-slate-500 hover:text-slate-900'
+                  }`}
+                >
+                  <CheckSquare size={14} />
+                  <span>📝 Tugas / Deadline</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setNewType('event')}
+                  className={`flex-1 py-2.5 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
+                    newType === 'event'
+                      ? 'bg-blue-600 text-white shadow-xs'
+                      : 'text-slate-500 hover:text-slate-900'
+                  }`}
+                >
+                  <CalendarDays size={14} />
+                  <span>📅 Event / Acara</span>
+                </button>
               </div>
 
               <form onSubmit={handleCreateTask} className="space-y-4">
                 <div className="space-y-1">
                   <label className="text-xs font-black text-slate-800 block">
-                    Judul Task
+                    {newType === 'task' ? 'Judul Tugas / Pekerjaan' : 'Nama Event / Acara'}
                   </label>
                   <input
                     type="text"
                     required
-                    placeholder="Contoh: Finish landing page design"
+                    placeholder={
+                      newType === 'task'
+                        ? 'Contoh: Submit Laporan Metpen'
+                        : 'Contoh: Sidang Pleno Angkatan / Webinar'
+                    }
                     value={newTitle}
                     onChange={(e) => setNewTitle(e.target.value)}
                     className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none"
@@ -726,54 +819,86 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
                   />
                 </div>
 
+                {/* FORM JAM: BERBEDAKAN ANTARA DEADLINE VS WAKTU ACARA */}
                 <div className="space-y-1">
                   <label className="text-xs font-black text-slate-800 block">
-                    Tanggal & Jam Deadline
+                    {newType === 'task' ? 'Tanggal & Jam Deadline' : 'Tanggal & Waktu Acara'}
                   </label>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-2">
                     <input
                       type="date"
                       value={newDate}
                       onChange={(e) => setNewDate(e.target.value)}
                       className="w-full px-3 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none"
                     />
-                    <input
-                      type="time"
-                      value={newTime}
-                      onChange={(e) => setNewTime(e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none"
-                    />
+
+                    {newType === 'task' ? (
+                      <input
+                        type="time"
+                        value={newTime}
+                        onChange={(e) => setNewTime(e.target.value)}
+                        className="w-full px-3 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none"
+                      />
+                    ) : (
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-400 block mb-0.5">
+                            Jam Mulai
+                          </span>
+                          <input
+                            type="time"
+                            value={newTime}
+                            onChange={(e) => setNewTime(e.target.value)}
+                            className="w-full px-3 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none"
+                          />
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-400 block mb-0.5">
+                            Jam Selesai
+                          </span>
+                          <input
+                            type="time"
+                            value={newEndTime}
+                            onChange={(e) => setNewEndTime(e.target.value)}
+                            className="w-full px-3 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none"
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-xs font-black text-slate-800 block">
-                    Prioritas
-                  </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {(['Low', 'Medium', 'High'] as const).map((p) => {
-                      const isSelected = newPriority === p;
-                      return (
-                        <button
-                          key={p}
-                          type="button"
-                          onClick={() => setNewPriority(p)}
-                          className={`py-2 rounded-full text-xs font-extrabold capitalize transition-all border ${
-                            isSelected
-                              ? p === 'High'
-                                ? 'bg-rose-500 text-white border-rose-500 shadow-xs'
-                                : p === 'Medium'
-                                ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
-                                : 'bg-emerald-500 text-white border-emerald-500 shadow-xs'
-                              : 'bg-slate-50 text-slate-600 border-slate-200'
-                          }`}
-                        >
-                          {p}
-                        </button>
-                      );
-                    })}
+                {/* PRIORITAS HANYA MUNCUL PADA TIPE TUGAS */}
+                {newType === 'task' && (
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-black text-slate-800 block">
+                      Prioritas
+                    </label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {(['Low', 'Medium', 'High'] as const).map((p) => {
+                        const isSelected = newPriority === p;
+                        return (
+                          <button
+                            key={p}
+                            type="button"
+                            onClick={() => setNewPriority(p)}
+                            className={`py-2 rounded-full text-xs font-extrabold capitalize transition-all border ${
+                              isSelected
+                                ? p === 'High'
+                                  ? 'bg-rose-500 text-white border-rose-500 shadow-xs'
+                                  : p === 'Medium'
+                                  ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
+                                  : 'bg-emerald-500 text-white border-emerald-500 shadow-xs'
+                                : 'bg-slate-50 text-slate-600 border-slate-200'
+                            }`}
+                          >
+                            {p}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
@@ -803,9 +928,13 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
 
                 <button
                   type="submit"
-                  className="w-full py-3.5 rounded-2xl bg-[#7C5CFC] text-white text-xs font-black hover:bg-purple-600 transition-colors shadow-lg shadow-purple-200/60 mt-2"
+                  className={`w-full py-3.5 rounded-2xl text-white text-xs font-black transition-colors shadow-lg mt-2 ${
+                    newType === 'event'
+                      ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-200/60'
+                      : 'bg-[#7C5CFC] hover:bg-purple-600 shadow-purple-200/60'
+                  }`}
                 >
-                  Buat Task
+                  {newType === 'task' ? 'Buat Task Baru' : 'Jadwalkan Event'}
                 </button>
               </form>
             </motion.div>
