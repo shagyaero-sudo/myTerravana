@@ -14,7 +14,6 @@ import {
   RotateCcw,
   CalendarDays,
   CheckSquare,
-  MapPin,
 } from 'lucide-react';
 import { StudentUser } from '../types';
 
@@ -149,7 +148,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
     },
   ]);
 
-  // Date Strip Generator
+  // Date Strip Generator (Hari Ini Di Paling Kiri)
   const dateStrip = useMemo(() => {
     const list = [];
     const base = new Date();
@@ -190,7 +189,6 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
     e.preventDefault();
     if (!newTitle.trim()) return;
 
-    // Convert Time format
     const formatTime12 = (time24: string) => {
       const [hrs, mins] = time24.split(':');
       const hourNum = parseInt(hrs, 10);
@@ -223,11 +221,24 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
     setIsAddModalOpen(false);
   };
 
-  const tasksForSelectedDate = tasks.filter((t) => {
-    const matchesDate = t.dateIso === selectedDateIso;
-    const matchesCat = selectedCategory === 'All' || t.category === selectedCategory;
-    return matchesDate && matchesCat;
-  });
+  // REVISI KRONOLOGI URUTAN JAM OTOMATIS
+  const tasksForSelectedDate = useMemo(() => {
+    const filtered = tasks.filter((t) => {
+      const matchesDate = t.dateIso === selectedDateIso;
+      const matchesCat = selectedCategory === 'All' || t.category === selectedCategory;
+      return matchesDate && matchesCat;
+    });
+
+    const parseTimeToMinutes = (timeStr: string) => {
+      const [time, period] = timeStr.split(' ');
+      let [hours, minutes] = time.split(':').map(Number);
+      if (period === 'PM' && hours < 12) hours += 12;
+      if (period === 'AM' && hours === 12) hours = 0;
+      return hours * 60 + minutes;
+    };
+
+    return filtered.sort((a, b) => parseTimeToMinutes(a.time) - parseTimeToMinutes(b.time));
+  }, [tasks, selectedDateIso, selectedCategory]);
 
   const activeDateObj = new Date(selectedDateIso);
   const activeDateFormatted = formatIndonesianDate(activeDateObj);
@@ -239,7 +250,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
 
   return (
     <div id="tasks-schedule-root" className="max-w-md mx-auto space-y-5 pt-2 pb-36 font-sans">
-      {/* 1. BAR PALING ATAS: (<-) | (Today: Sab, 19 Sept 2026) | (+) */}
+      {/* 1. BAR PALING ATAS */}
       <div className="flex items-center justify-between gap-2">
         <button
           type="button"
@@ -377,7 +388,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
         </div>
       )}
 
-      {/* 5. TIMELINE LIST (TASK VS EVENT DIFFERENTIATED) */}
+      {/* 5. TIMELINE LIST (TERURUT KRONOLOGIS) */}
       <div className="pt-2 space-y-4">
         {tasksForSelectedDate.length > 0 ? (
           tasksForSelectedDate.map((task) => (
@@ -406,7 +417,6 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
                 <div className="space-y-1">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5">
-                      {/* Badge Tipe Agenda */}
                       {task.type === 'event' ? (
                         <span className="px-2 py-0.5 rounded-full bg-blue-600 text-white text-[9px] font-black uppercase tracking-wider flex items-center gap-1">
                           <CalendarDays size={10} />
@@ -459,7 +469,6 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
                     Details &gt;
                   </button>
 
-                  {/* Jika Tipe TUGAS: Munculkan Tombol Checked */}
                   {task.type === 'task' ? (
                     <button
                       type="button"
@@ -483,7 +492,6 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
                       )}
                     </button>
                   ) : (
-                    /* Jika Tipe EVENT: Tampilkan Tag Informasi Jadwal */
                     <span className="text-[10px] font-extrabold text-blue-700 bg-blue-100/80 px-2.5 py-1 rounded-xl">
                       📅 Jadwal Acara
                     </span>
@@ -504,10 +512,10 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
       </div>
 
       {/* ========================================================= */}
-      {/* MODALS SECTION (z-[100] & z-[120]) */}
+      {/* MODALS SECTION */}
       {/* ========================================================= */}
 
-      {/* MODAL POPUP KALENDER UTUH */}
+      {/* MODAL KALENDER UTUH */}
       <AnimatePresence>
         {isCalendarModalOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
@@ -736,7 +744,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
         )}
       </AnimatePresence>
 
-      {/* MODAL ADD NEW TASK / EVENT WITH SEGMENTED SWITCH */}
+      {/* MODAL ADD NEW AGENDA */}
       <AnimatePresence>
         {isAddModalOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
@@ -758,7 +766,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
                 <div className="w-5" />
               </div>
 
-              {/* SEGMENTED SWITCH: TUGAS / DEADLINE VS EVENT / ACARA */}
+              {/* SEGMENTED SWITCH */}
               <div className="bg-slate-100 p-1 rounded-2xl flex items-center gap-1">
                 <button
                   type="button"
@@ -819,7 +827,6 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
                   />
                 </div>
 
-                {/* FORM JAM: BERBEDAKAN ANTARA DEADLINE VS WAKTU ACARA */}
                 <div className="space-y-1">
                   <label className="text-xs font-black text-slate-800 block">
                     {newType === 'task' ? 'Tanggal & Jam Deadline' : 'Tanggal & Waktu Acara'}
@@ -868,7 +875,6 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
                   </div>
                 </div>
 
-                {/* PRIORITAS HANYA MUNCUL PADA TIPE TUGAS */}
                 {newType === 'task' && (
                   <div className="space-y-1.5">
                     <label className="text-xs font-black text-slate-800 block">
