@@ -15,10 +15,10 @@ import {
   Edit3,
   Sun,
   ShieldCheck,
+  ExternalLink,
+  BookOpen,
   Award,
-  AlertTriangle,
-  Trophy,
-  Users,
+  Sparkles,
 } from 'lucide-react';
 import { StudentUser } from '../types';
 
@@ -37,6 +37,15 @@ export interface AgendaData {
   location: string;
   organizer: string;
   tag: string;
+}
+
+interface ClassScheduleItem {
+  id: string;
+  subject: string;
+  time: string;
+  room: string;
+  lecturer: string;
+  code: string;
 }
 
 interface DashboardViewProps {
@@ -67,23 +76,32 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onEditAgenda,
 }) => {
   const [isDetailAnnouncementOpen, setIsDetailAnnouncementOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState('25');
 
   const kpiPercentage = Math.round((masteredCount / totalStudents) * 100);
   const topMasteredStudents = students.filter((s) => s.mastered).slice(0, 4);
 
-  // Strip Tanggal Mingguan
-  const weekDays = [
-    { day: 'Sun', date: '22' },
-    { day: 'Mon', date: '23' },
-    { day: 'Tue', date: '24' },
-    { day: 'Wed', date: '25' },
-    { day: 'Thu', date: '26' },
-    { day: 'Fri', date: '27' },
+  // Sample data jadwal kuliah harian (Hari Ini)
+  const todayClasses: ClassScheduleItem[] = [
+    {
+      id: 'c1',
+      subject: 'Pengantar Studi Pembangunan',
+      time: '08:00 - 10:30',
+      room: 'R. 102 Lt. 1',
+      lecturer: 'Tim Dosen PSP',
+      code: 'A',
+    },
+    {
+      id: 'c2',
+      subject: 'Ekonomi Pembangunan I',
+      time: '13:00 - 15:30',
+      room: 'R. 204 Lt. 2',
+      lecturer: 'Dr. Ir. Budi Santoso',
+      code: 'A',
+    },
   ];
 
   return (
-    <div id="dashboard-view-root" className="max-w-2xl mx-auto space-y-6 pt-2 pb-36 font-sans">
+    <div id="dashboard-view-root" className="max-w-2xl mx-auto space-y-5 pt-2 pb-36 font-sans">
       {/* 1. TOP BAR: LOGO ANGKATAN & AVATAR PROFIL + BPH TOGGLE */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -97,11 +115,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <div>
             <div className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-slate-400 leading-none">
               <Sun size={12} className="text-amber-500" />
-              <span>Overview</span>
+              <span>Dashboard Home</span>
             </div>
             <h1
               onClick={onToggleOfficerMode}
-              className="text-lg font-black tracking-tight text-slate-900 cursor-pointer hover:text-indigo-600 transition-colors flex items-center gap-1.5"
+              className="text-lg font-black tracking-tight text-slate-900 cursor-pointer hover:text-indigo-600 transition-colors flex items-center gap-1.5 mt-0.5"
               title={currentUser.is_officer ? 'Mode BPH Aktif (Klik untuk matikan)' : 'Klik untuk masuk mode BPH'}
             >
               <span>Halo, {currentUser.nickname}! 👋</span>
@@ -115,7 +133,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         <div className="flex items-center gap-2">
           {currentUser.is_officer && (
             <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-slate-900 text-white shadow-xs">
-              BPH / OFFICER
+              BPH
             </span>
           )}
           <button
@@ -138,7 +156,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
       </div>
 
-      {/* 2. HERO BANNER UNGU (DAILY CHALLENGE / TERRAQUIZ KPI) */}
+      {/* 2. PROGRESS CHALLENGE TERRAQUIZ (HERO BANNER - EVERNOTE SOFT CLAY STYLE) */}
       <div
         onClick={() => onNavigateTab('terraquiz')}
         className="relative bg-[#A088F2] rounded-[32px] p-6 text-white shadow-xl shadow-purple-200/50 overflow-hidden cursor-pointer group transition-all hover:scale-[1.005]"
@@ -164,115 +182,106 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </svg>
         </motion.div>
 
-        <div className="relative z-10 space-y-4">
-          <div>
-            <h3 className="text-2xl font-black tracking-tight leading-tight">
-              Daily Challenge
-            </h3>
-            <p className="text-xs font-semibold text-purple-100/90 mt-1">
-              Target hafalan angkatan Terravana 2026 ({kpiPercentage}% Tuntas)
-            </p>
-          </div>
-
-          {/* Stack Avatar Pendaftar / Mastered */}
-          <div className="flex items-center gap-3 pt-2">
-            <div className="flex -space-x-2.5 overflow-hidden">
-              {topMasteredStudents.length > 0
-                ? topMasteredStudents.map((st) => (
-                    <img
-                      key={st.id}
-                      src={st.avatar}
-                      alt={st.name}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onSelectStudent(st);
-                      }}
-                      className="inline-block h-8 w-8 rounded-full ring-2 ring-[#A088F2] object-cover hover:scale-110 transition-transform"
-                    />
-                  ))
-                : students.slice(0, 4).map((st) => (
-                    <img
-                      key={st.id}
-                      src={st.avatar}
-                      alt={st.name}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onSelectStudent(st);
-                      }}
-                      className="inline-block h-8 w-8 rounded-full ring-2 ring-[#A088F2] object-cover hover:scale-110 transition-transform"
-                    />
-                  ))}
-              <div
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onNavigateTab('terrafinder');
-                }}
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-[10px] font-black text-white ring-2 ring-[#A088F2] hover:bg-slate-800"
-              >
-                +{totalStudents - 4}
-              </div>
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-3">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 text-[10px] font-extrabold uppercase tracking-wider text-purple-100 backdrop-blur-md">
+              <Sparkles size={12} />
+              <span>Terraquiz Progress Challenge</span>
             </div>
 
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onNavigateTab('terraquiz');
-              }}
-              className="px-4 py-2 rounded-2xl bg-white text-slate-900 text-xs font-black hover:bg-slate-100 transition-all shadow-xs flex items-center gap-1.5 group-hover:translate-x-1"
-            >
-              <span>Mainkan Kuis</span>
-              <ChevronRight size={14} />
-            </button>
+            <div>
+              <h3 className="text-2xl font-black tracking-tight leading-tight">
+                Hafalan Terravana 2026
+              </h3>
+              <p className="text-xs font-semibold text-purple-100/90 mt-1">
+                {masteredCount} dari {totalStudents} Mahasiswa Telah Dikuasai
+              </p>
+            </div>
+
+            {/* Stack Avatar */}
+            <div className="flex items-center gap-3 pt-1">
+              <div className="flex -space-x-2.5 overflow-hidden">
+                {topMasteredStudents.length > 0
+                  ? topMasteredStudents.map((st) => (
+                      <img
+                        key={st.id}
+                        src={st.avatar}
+                        alt={st.name}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSelectStudent(st);
+                        }}
+                        className="inline-block h-8 w-8 rounded-full ring-2 ring-[#A088F2] object-cover hover:scale-110 transition-transform"
+                      />
+                    ))
+                  : students.slice(0, 4).map((st) => (
+                      <img
+                        key={st.id}
+                        src={st.avatar}
+                        alt={st.name}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSelectStudent(st);
+                        }}
+                        className="inline-block h-8 w-8 rounded-full ring-2 ring-[#A088F2] object-cover hover:scale-110 transition-transform"
+                      />
+                    ))}
+                <div
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onNavigateTab('terrafinder');
+                  }}
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-[10px] font-black text-white ring-2 ring-[#A088F2] hover:bg-slate-800"
+                >
+                  +{totalStudents - 4}
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onNavigateTab('terraquiz');
+                }}
+                className="px-4 py-2 rounded-2xl bg-white text-slate-900 text-xs font-black hover:bg-slate-100 transition-all shadow-xs flex items-center gap-1.5 group-hover:translate-x-1"
+              >
+                <span>Mainkan Kuis</span>
+                <ChevronRight size={14} />
+              </button>
+            </div>
+          </div>
+
+          {/* EVERNOTE PROGRESS CIRCLE WIDGET */}
+          <div className="shrink-0 flex items-center justify-center">
+            <div className="relative w-20 h-20 rounded-full bg-white/10 border border-white/20 flex flex-col items-center justify-center backdrop-blur-sm">
+              <span className="text-2xl font-black">{kpiPercentage}%</span>
+              <span className="text-[9px] font-extrabold uppercase tracking-widest text-purple-200">
+                KPI
+              </span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* 3. HORIZONTAL DATE STRIP */}
-      <div className="flex items-center justify-between gap-2 px-1">
-        {weekDays.map((item) => {
-          const isActive = selectedDate === item.date;
-          return (
-            <button
-              key={item.date}
-              type="button"
-              onClick={() => setSelectedDate(item.date)}
-              className={`flex-1 flex flex-col items-center py-2.5 rounded-2xl transition-all ${
-                isActive
-                  ? 'bg-slate-900 text-white shadow-md scale-105 font-bold'
-                  : 'bg-white text-slate-500 hover:bg-slate-50 border border-slate-100'
-              }`}
-            >
-              <span className="text-[10px] font-bold uppercase tracking-wider opacity-80">
-                {item.day}
-              </span>
-              <span className="text-sm font-black mt-0.5">{item.date}</span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* 4. ASYMMETRIC GRID CARDS (YOUR PLAN / HIGHLIGHTS) */}
-      <div className="space-y-3">
+      {/* 3. BENTO CARDS SECTION (JADWAL MATKUL & MYITS SHORTCUTS) */}
+      <div className="space-y-3 pt-1">
         <div className="flex items-center justify-between px-1">
           <h3 className="text-lg font-black text-slate-900 tracking-tight">
-            Your plan
+            Today's Academic
           </h3>
           <button
             type="button"
-            onClick={() => setIsDetailAnnouncementOpen(true)}
-            className="text-xs font-bold text-slate-400 hover:text-slate-800 transition-colors"
+            onClick={() => onNavigateTab('tasks')}
+            className="text-xs font-bold text-slate-400 hover:text-slate-800 transition-colors flex items-center gap-1"
           >
-            See all
+            <span>Buka Productivity</span>
+            <ChevronRight size={12} />
           </button>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* KARTU KUNING PASTEL (AGENDA UTAMA TERDEKAT) */}
-          <div
-            onClick={() => onNavigateTab('terrafinder')}
-            className="relative bg-[#FFDA66] rounded-[32px] p-5 text-slate-900 shadow-lg shadow-amber-200/40 flex flex-col justify-between space-y-4 overflow-hidden cursor-pointer hover:scale-[1.01] transition-transform"
-          >
+          {/* KARTU KUNING PASTEL (JADWAL MATKUL HARIAN) */}
+          <div className="relative bg-[#FFDA66] rounded-[32px] p-5 text-slate-900 shadow-lg shadow-amber-200/40 flex flex-col justify-between space-y-4 overflow-hidden">
             {/* Animated Soft Clay Gem SVG */}
             <motion.div
               animate={{
@@ -297,63 +306,49 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <div className="relative z-10 space-y-3">
               <div className="flex items-center justify-between">
                 <span className="inline-block px-3 py-1 rounded-full bg-white/80 text-[10px] font-extrabold text-amber-900">
-                  {agendas[0]?.tag || 'Wajib Angkatan'}
+                  Jadwal Matkul Hari Ini
                 </span>
-                {currentUser.is_officer && onEditAgenda && agendas[0] && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onEditAgenda(agendas[0]);
-                    }}
-                    className="p-1 rounded-full bg-white/80 hover:bg-white text-slate-800 transition-colors"
-                    title="Edit Agenda"
-                  >
-                    <Edit3 size={12} />
-                  </button>
-                )}
+                <span className="text-[10px] font-black bg-amber-900/10 text-amber-900 px-2 py-0.5 rounded-md">
+                  Kelas {currentUser.class_code || 'A'}
+                </span>
               </div>
 
-              <div>
-                <h4 className="text-xl font-black leading-tight">
-                  {agendas[0]?.title || 'Sidang Pleno Terravana 2026'}
-                </h4>
-                <div className="mt-2 space-y-1 text-xs font-bold text-amber-950/80">
-                  <div className="flex items-center gap-1.5">
-                    <Calendar size={13} />
-                    <span>{agendas[0]?.date || '25 Nov. 2026'}</span>
+              <div className="space-y-2.5">
+                {todayClasses.map((item) => (
+                  <div
+                    key={item.id}
+                    className="p-2.5 rounded-2xl bg-white/70 border border-white/80 backdrop-blur-xs space-y-1"
+                  >
+                    <h4 className="text-xs font-black text-slate-900 leading-snug">
+                      {item.subject}
+                    </h4>
+                    <div className="flex items-center justify-between text-[10px] font-bold text-amber-950/80">
+                      <div className="flex items-center gap-1">
+                        <Clock size={11} />
+                        <span>{item.time}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <MapPin size={11} />
+                        <span>{item.room}</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <Clock size={13} />
-                    <span>{agendas[0]?.time || '14:00 - 15:00'}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <MapPin size={13} />
-                    <span>{agendas[0]?.location || 'Auditorium ITS'}</span>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
 
-            <div className="relative z-10 pt-2 flex items-center gap-2 border-t border-amber-900/10">
-              <div className="w-7 h-7 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-black">
-                T
-              </div>
-              <div>
-                <span className="text-[10px] font-bold text-amber-900/70 block leading-tight">Panitia</span>
-                <span className="text-xs font-extrabold text-slate-900">{agendas[0]?.organizer || 'BPH Terravana'}</span>
-              </div>
+            <div className="relative z-10 pt-2 flex items-center justify-between border-t border-amber-900/10">
+              <span className="text-[11px] font-extrabold text-amber-950">
+                Selalu tepat waktu ke kelas!
+              </span>
+              <BookOpen size={16} className="text-amber-900 opacity-80" />
             </div>
           </div>
 
-          {/* RIGHT COLUMN */}
+          {/* RIGHT COLUMN: SHORTCUT MYITS PORTAL & AGENDA UTAMA */}
           <div className="space-y-4 flex flex-col justify-between">
-            {/* KARTU BIRU MUDA (BALANCE / STATS) */}
-            <div
-              onClick={() => onNavigateTab('terraquiz')}
-              className="relative bg-[#D0E5FF] rounded-[32px] p-5 text-slate-900 shadow-lg shadow-blue-100/50 flex-1 flex flex-col justify-between space-y-3 overflow-hidden cursor-pointer hover:scale-[1.01] transition-transform"
-            >
-              {/* Animated Floating Sphere */}
+            {/* KARTU BIRU MUDA (MYITS PORTAL SHORTCUTS) */}
+            <div className="relative bg-[#D0E5FF] rounded-[32px] p-5 text-slate-900 shadow-lg shadow-blue-100/50 flex-1 flex flex-col justify-between space-y-3 overflow-hidden">
               <motion.div
                 animate={{
                   y: [0, -8, 0],
@@ -375,34 +370,43 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
               <div className="relative z-10 space-y-2">
                 <span className="inline-block px-3 py-1 rounded-full bg-white/80 text-[10px] font-extrabold text-blue-900">
-                  Stats Hafalan
+                  Quick Access
                 </span>
 
                 <div>
                   <h4 className="text-lg font-black leading-tight">
-                    Progress Angkatan
+                    Portal myITS Shortcuts
                   </h4>
-                  <p className="text-xs font-bold text-blue-950/70 mt-1">
-                    {masteredCount} dari {totalStudents} Mahasiswa Telah Dikuasai
+                  <p className="text-xs font-bold text-blue-950/70 mt-0.5">
+                    Akses cepat ke layanan akademik kampus
                   </p>
                 </div>
               </div>
 
-              <div className="relative z-10 pt-1">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onNavigateTab('terraquiz');
-                  }}
-                  className="w-full py-2 rounded-2xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-colors shadow-xs"
+              {/* Action Buttons Redirect Portal */}
+              <div className="relative z-10 grid grid-cols-2 gap-2 pt-1">
+                <a
+                  href="https://my.its.ac.id"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="py-2 px-3 rounded-2xl bg-slate-900 text-white text-[11px] font-extrabold hover:bg-slate-800 transition-colors shadow-xs flex items-center justify-between"
                 >
-                  Uji Hafalan
-                </button>
+                  <span>myITS Portal</span>
+                  <ExternalLink size={12} />
+                </a>
+                <a
+                  href="https://classroom.google.com"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="py-2 px-3 rounded-2xl bg-white text-slate-900 text-[11px] font-extrabold hover:bg-slate-50 transition-colors shadow-xs flex items-center justify-between"
+                >
+                  <span>Classroom</span>
+                  <ExternalLink size={12} />
+                </a>
               </div>
             </div>
 
-            {/* KARTU PINK PASTEL (MEDIA SOSIAL) */}
+            {/* KARTU PINK PASTEL (MEDIA SOSIAL ANGKATAN) */}
             <div className="bg-[#F5C7F7] rounded-[32px] p-4 text-slate-900 shadow-lg shadow-pink-100/50 flex items-center justify-between gap-3">
               <div>
                 <span className="text-xs font-black block">Follow us</span>
@@ -440,7 +444,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
       </div>
 
-      {/* MODAL DETAIL PENGUMUMAN FULL */}
+      {/* MODAL DETAIL PENGUMUMAN */}
       <AnimatePresence>
         {isDetailAnnouncementOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
