@@ -1,32 +1,31 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
+  ArrowLeft,
   Plus,
+  MoreHorizontal,
   Calendar as CalendarIcon,
+  Video,
   Clock,
-  CheckCircle2,
-  Circle,
   X,
-  Check,
-  Tag,
-  AlertCircle,
-  Briefcase,
-  User,
+  Star,
+  CheckCircle2,
   Sparkles,
   ChevronRight,
-  ChevronDown,
 } from 'lucide-react';
 import { StudentUser } from '../types';
 
-export interface TaskItem {
+export interface ScheduledTask {
   id: string;
+  time: string;
+  period: 'Morning' | 'Afternoon' | 'Evening';
   title: string;
-  description: string;
-  dueDate: string;
-  dueTime: string;
-  status: 'todo' | 'in_progress' | 'completed';
-  priority: 'low' | 'medium' | 'high';
-  category: 'Work' | 'Personal' | 'Organisasi';
+  description?: string;
+  timeRange?: string;
+  status?: 'In Progress' | 'Completed' | 'Pending';
+  meetLink?: string;
+  category: 'Work' | 'Personal';
+  dateStr: string; // e.g. "Wed, Apr 14"
   assignees?: StudentUser[];
 }
 
@@ -36,382 +35,318 @@ interface TasksViewProps {
 }
 
 export const TasksView: React.FC<TasksViewProps> = ({ currentUser, students }) => {
-  // Master Task State
-  const [tasks, setTasks] = useState<TaskItem[]>([
+  // Master Scheduled Tasks
+  const [tasks, setTasks] = useState<ScheduledTask[]>([
     {
-      id: 't1',
-      title: 'Design Landing Page Terravana',
-      description: 'Finish landing page design and review UI component with team.',
-      dueDate: 'April 14, 2026',
-      dueTime: '10:30 AM',
-      status: 'todo',
-      priority: 'high',
+      id: 'st-1',
+      time: '9:00 AM',
+      period: 'Morning',
+      title: 'Meeting with Client / Dosen',
+      description: 'Client meeting to review project progress, align on goals, and plan upcoming tasks.',
+      meetLink: 'https://meet.google.com',
       category: 'Work',
+      dateStr: 'Wed, Apr 14',
       assignees: students.slice(0, 3),
     },
     {
-      id: 't2',
-      title: 'Submit Proposal PKM-RSH',
-      description: 'Lengkapi berkas administrasi dan lembar pengesahan Dosen Pembimbing.',
-      dueDate: 'April 18, 2026',
-      dueTime: '11:59 PM',
-      status: 'in_progress',
-      priority: 'high',
+      id: 'st-2',
+      time: '11:00 AM',
+      period: 'Morning',
+      title: 'Next Month Dribbble Short Design',
+      timeRange: '11:10 AM - 01:30 PM',
+      status: 'In Progress',
       category: 'Work',
+      dateStr: 'Wed, Apr 14',
       assignees: students.slice(1, 4),
     },
     {
-      id: 't3',
-      title: 'Bayar Kas Angkatan Terravana',
-      description: 'Transfer iuran bulan ini ke rekening bendahara BPH.',
-      dueDate: 'April 20, 2026',
-      dueTime: '05:00 PM',
-      status: 'todo',
-      priority: 'medium',
-      category: 'Personal',
-    },
-    {
-      id: 't4',
+      id: 'st-3',
+      time: '2:30 PM',
+      period: 'Afternoon',
       title: 'Review Rangkuman Matkul PSP',
-      description: 'Baca kembali slide dosen untuk persiapan kuis minggu depan.',
-      dueDate: 'April 22, 2026',
-      dueTime: '08:00 AM',
-      status: 'completed',
-      priority: 'low',
-      category: 'Work',
+      description: 'Persiapan kuis bersama teman kelompok di Ruang Baca.',
+      category: 'Personal',
+      dateStr: 'Wed, Apr 14',
+      assignees: [currentUser],
     },
   ]);
 
-  // UI Filter States
-  const [activeTab, setActiveTab] = useState<'todo' | 'in_progress' | 'completed'>('todo');
-  const [selectedCategory, setSelectedCategory] = useState<'All' | 'Work' | 'Personal' | 'Organisasi'>('All');
+  // Selected Date State (Default: Wed 14)
+  const [selectedDateNum, setSelectedDateNum] = useState(14);
+  const [selectedCategory, setSelectedCategory] = useState<'All' | 'Work' | 'Personal'>('All');
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Form State untuk Modal Add New Task
+  // Form States untuk Modal Add New Task
   const [newTitle, setNewTitle] = useState('');
   const [newDesc, setNewDesc] = useState('');
-  const [newDate, setNewDate] = useState('2026-04-26');
-  const [newTime, setNewTime] = useState('10:00');
-  const [newPriority, setNewPriority] = useState<'low' | 'medium' | 'high'>('medium');
-  const [newCategory, setNewCategory] = useState<'Work' | 'Personal' | 'Organisasi'>('Work');
+  const [newDate, setNewDate] = useState('2026-04-14');
+  const [newTime, setNewTime] = useState('09:00');
+  const [newTimeEnd, setNewTimeEnd] = useState('10:30');
+  const [newCategory, setNewCategory] = useState<'Work' | 'Personal'>('Work');
+  const [newMeetLink, setNewMeetLink] = useState('');
+  const [newPriority, setNewPriority] = useState<'Low' | 'Medium' | 'High'>('Medium');
 
-  // Stats Counters
-  const totalTasks = tasks.length;
-  const completedTasks = tasks.filter((t) => t.status === 'completed').length;
-  const pendingTasks = tasks.filter((t) => t.status !== 'completed').length;
-  const progressPercentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-
-  // Handler Toggle Status
-  const handleToggleStatus = (taskId: string) => {
-    setTasks((prev) =>
-      prev.map((task) => {
-        if (task.id === taskId) {
-          const nextStatus = task.status === 'completed' ? 'todo' : 'completed';
-          return { ...task, status: nextStatus };
-        }
-        return task;
-      })
-    );
-  };
+  // Strip Tanggal Horizontal (Mon - Sat)
+  const dateStrip = [
+    { day: 'Mon', date: 12 },
+    { day: 'Tue', date: 13 },
+    { day: 'Wed', date: 14 },
+    { day: 'Thu', date: 15 },
+    { day: 'Fri', date: 16 },
+    { day: 'Sat', date: 17 },
+  ];
 
   // Handler Create Task Baru
   const handleCreateTask = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTitle.trim()) return;
 
-    const newTask: TaskItem = {
-      id: `task-${Date.now()}`,
+    // Convert Time format
+    const [hrs, mins] = newTime.split(':');
+    const hourNum = parseInt(hrs, 10);
+    const ampm = hourNum >= 12 ? 'PM' : 'AM';
+    const displayHour = hourNum % 12 || 12;
+    const formattedTime = `${displayHour}:${mins} ${ampm}`;
+
+    const newTask: ScheduledTask = {
+      id: `st-${Date.now()}`,
+      time: formattedTime,
+      period: hourNum < 12 ? 'Morning' : 'Afternoon',
       title: newTitle,
       description: newDesc,
-      dueDate: newDate,
-      dueTime: newTime,
-      status: 'todo',
-      priority: newPriority,
+      timeRange: `${formattedTime} - ${newTimeEnd}`,
       category: newCategory,
+      meetLink: newMeetLink || undefined,
+      status: 'In Progress',
+      dateStr: 'Wed, Apr 14',
       assignees: [currentUser],
     };
 
-    setTasks([newTask, ...tasks]);
-    // Reset Form
+    setTasks([...tasks, newTask]);
     setNewTitle('');
     setNewDesc('');
+    setNewMeetLink('');
     setIsModalOpen(false);
   };
 
-  // Filter Tasks berdasarkan Tab & Category
+  // Filter Tasks berdasarkan Kategori
   const filteredTasks = tasks.filter((task) => {
-    const matchesTab =
-      activeTab === 'todo'
-        ? task.status === 'todo'
-        : activeTab === 'in_progress'
-        ? task.status === 'in_progress'
-        : task.status === 'completed';
-
-    const matchesCategory = selectedCategory === 'All' || task.category === selectedCategory;
-
-    return matchesTab && matchesCategory;
+    if (selectedCategory === 'All') return true;
+    return task.category === selectedCategory;
   });
 
   return (
-    <div id="tasks-view-root" className="max-w-2xl mx-auto space-y-6 pt-2 pb-36 font-sans">
-      {/* 1. HEADER ATAS & ADD TASK BUTTON */}
+    <div id="tasks-schedule-root" className="max-w-md mx-auto space-y-5 pt-2 pb-36 font-sans">
+      {/* 1. TOP HEADER (BACK, DATE TITLE, ADD BUTTON, MORE) */}
       <div className="flex items-center justify-between">
+        <button
+          type="button"
+          className="w-10 h-10 rounded-full bg-white/80 border border-slate-100 flex items-center justify-center text-slate-700 shadow-xs hover:bg-white"
+        >
+          <ArrowLeft size={18} />
+        </button>
+
+        <span className="text-sm font-extrabold text-slate-800 tracking-tight">
+          Wed, April 26
+        </span>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setIsModalOpen(true)}
+            className="w-10 h-10 rounded-full bg-[#7C5CFC] text-white flex items-center justify-center shadow-md shadow-purple-200/60 hover:scale-105 transition-all"
+            title="Add Task"
+          >
+            <Plus size={20} />
+          </button>
+
+          <button
+            type="button"
+            className="w-10 h-10 rounded-full bg-white/80 border border-slate-100 flex items-center justify-center text-slate-700 shadow-xs hover:bg-white"
+          >
+            <MoreHorizontal size={18} />
+          </button>
+        </div>
+      </div>
+
+      {/* 2. TITLE & CALENDAR PILL BUTTON */}
+      <div className="flex items-end justify-between pt-1">
         <div>
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block leading-none">
-            PRODUCTIVITY OS
-          </span>
-          <h1 className="text-2xl font-black tracking-tight text-slate-900 mt-0.5">
-            Tasks & Schedule
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-tight">
+            Task
+          </h1>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-tight">
+            Schedule
           </h1>
         </div>
 
         <button
           type="button"
-          onClick={() => setIsModalOpen(true)}
-          className="w-11 h-11 rounded-full bg-[#A088F2] text-white flex items-center justify-center shadow-lg shadow-purple-200/60 hover:scale-105 active:scale-95 transition-all"
-          title="Tambah Tugas Baru"
+          className="px-4 py-2.5 rounded-2xl bg-white border border-slate-100 shadow-xs flex items-center gap-2 text-xs font-black text-slate-800 hover:bg-slate-50 transition-colors"
         >
-          <Plus size={22} />
+          <CalendarIcon size={15} className="text-slate-700" />
+          <span>Calendar</span>
         </button>
       </div>
 
-      {/* 2. TODAY'S PROGRESS STATS CARD (PERSIS REFERENSI SCREEN 1) */}
-      <div className="relative bg-[#F5C7F7] rounded-[32px] p-5 text-slate-900 shadow-xl shadow-pink-100/60 overflow-hidden">
-        {/* Soft Clay Background Accent */}
-        <motion.div
-          animate={{
-            y: [0, -6, 0],
-          }}
-          transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute -right-6 -bottom-6 w-32 h-32 pointer-events-none opacity-80"
-        >
-          <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <radialGradient id="clayPink" cx="30%" cy="30%" r="70%">
-                <stop offset="0%" stopColor="#FFFFFF" />
-                <stop offset="50%" stopColor="#F5A0D9" />
-                <stop offset="100%" stopColor="#C451B0" />
-              </radialGradient>
-            </defs>
-            <circle cx="100" cy="100" r="80" fill="url(#clayPink)" />
-          </svg>
-        </motion.div>
-
-        <div className="relative z-10 flex items-center justify-between gap-4">
-          <div className="space-y-3">
-            <span className="inline-flex items-center gap-1 px-3 py-0.5 rounded-full bg-white/70 text-[10px] font-black text-pink-950 uppercase tracking-wider">
-              <Sparkles size={11} />
-              <span>Today's Progress</span>
-            </span>
-
-            <div className="grid grid-cols-3 gap-3 pt-1">
-              <div className="bg-white/60 backdrop-blur-xs p-2.5 rounded-2xl border border-white/80">
-                <span className="text-lg font-black block leading-none">{totalTasks}</span>
-                <span className="text-[10px] font-bold text-pink-950/70 block mt-1">
-                  Total Task
-                </span>
-              </div>
-
-              <div className="bg-white/60 backdrop-blur-xs p-2.5 rounded-2xl border border-white/80">
-                <span className="text-lg font-black block leading-none text-emerald-700">
-                  {completedTasks}
-                </span>
-                <span className="text-[10px] font-bold text-pink-950/70 block mt-1">
-                  Completed
-                </span>
-              </div>
-
-              <div className="bg-white/60 backdrop-blur-xs p-2.5 rounded-2xl border border-white/80">
-                <span className="text-lg font-black block leading-none text-amber-700">
-                  {pendingTasks}
-                </span>
-                <span className="text-[10px] font-bold text-pink-950/70 block mt-1">
-                  Pending Task
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* RADIAL PROGRESS RING CIRCLE */}
-          <div className="shrink-0 flex items-center justify-center">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/80 border-4 border-pink-300 flex flex-col items-center justify-center shadow-xs">
-              <span className="text-base sm:text-xl font-black text-slate-900 leading-none">
-                {progressPercentage}%
-              </span>
-              <span className="text-[8px] font-black uppercase text-pink-800 tracking-wider mt-0.5">
-                Done
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 3. FILTER TABS (TO DO, IN PROGRESS, COMPLETED) */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between gap-2 bg-slate-100 p-1.5 rounded-2xl">
-          <button
-            type="button"
-            onClick={() => setActiveTab('todo')}
-            className={`flex-1 py-2 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-1.5 ${
-              activeTab === 'todo'
-                ? 'bg-white text-slate-900 shadow-xs'
-                : 'text-slate-500 hover:text-slate-900'
-            }`}
-          >
-            <span className="w-5 h-5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-black flex items-center justify-center">
-              {tasks.filter((t) => t.status === 'todo').length}
-            </span>
-            <span>To Do</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('in_progress')}
-            className={`flex-1 py-2 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-1.5 ${
-              activeTab === 'in_progress'
-                ? 'bg-white text-slate-900 shadow-xs'
-                : 'text-slate-500 hover:text-slate-900'
-            }`}
-          >
-            <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-800 text-[10px] font-black flex items-center justify-center">
-              {tasks.filter((t) => t.status === 'in_progress').length}
-            </span>
-            <span>In Progress</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('completed')}
-            className={`flex-1 py-2 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-1.5 ${
-              activeTab === 'completed'
-                ? 'bg-white text-slate-900 shadow-xs'
-                : 'text-slate-500 hover:text-slate-900'
-            }`}
-          >
-            <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black flex items-center justify-center">
-              {completedTasks}
-            </span>
-            <span>Completed</span>
-          </button>
-        </div>
-
-        {/* CATEGORY TAG FILTERS (ALL, WORK, PERSONAL, ORGANISASI) */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-          {(['All', 'Work', 'Personal', 'Organisasi'] as const).map((cat) => {
-            const isActive = selectedCategory === cat;
-            return (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => setSelectedCategory(cat)}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-extrabold shrink-0 transition-all ${
-                  isActive
-                    ? 'bg-slate-900 text-white shadow-xs'
-                    : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                {cat === 'Work' ? '💼 Work / Kuliah' : cat === 'Personal' ? '👤 Personal' : cat === 'Organisasi' ? '👥 Organisasi' : '✨ All'}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* 4. TASK LIST CARDS (PERSIS UX SCREEN 1 & 2) */}
-      <div className="space-y-3">
-        {filteredTasks.length > 0 ? (
-          filteredTasks.map((task) => (
-            <motion.div
-              key={task.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={`bg-white rounded-[28px] p-5 border border-slate-100 shadow-md transition-all space-y-3 ${
-                task.status === 'completed' ? 'opacity-65 bg-slate-50/80' : ''
+      {/* 3. HORIZONTAL DATE STRIP */}
+      <div className="flex items-center justify-between gap-1.5 py-1">
+        {dateStrip.map((item) => {
+          const isActive = selectedDateNum === item.date;
+          return (
+            <button
+              key={item.date}
+              type="button"
+              onClick={() => setSelectedDateNum(item.date)}
+              className={`flex-1 py-3.5 rounded-full flex flex-col items-center justify-center transition-all ${
+                isActive
+                  ? 'bg-[#1E1B26] text-white shadow-lg shadow-slate-900/20 scale-105'
+                  : 'bg-white/80 text-slate-700 hover:bg-white border border-slate-100'
               }`}
             >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start gap-3">
-                  <button
-                    type="button"
-                    onClick={() => handleToggleStatus(task.id)}
-                    className="mt-0.5 text-slate-300 hover:text-emerald-500 transition-colors"
-                  >
-                    {task.status === 'completed' ? (
-                      <CheckCircle2 size={22} className="text-emerald-500 fill-emerald-100" />
-                    ) : (
-                      <Circle size={22} />
-                    )}
-                  </button>
+              <span className="text-[10px] font-bold opacity-70 block">{item.day}</span>
+              <span className="text-sm font-black mt-0.5">{item.date}</span>
+            </button>
+          );
+        })}
+      </div>
 
-                  <div>
-                    <span
-                      className={`inline-block px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider mb-1 ${
-                        task.priority === 'high'
-                          ? 'bg-rose-100 text-rose-700'
-                          : task.priority === 'medium'
-                          ? 'bg-amber-100 text-amber-800'
-                          : 'bg-emerald-100 text-emerald-800'
-                      }`}
-                    >
-                      ● {task.priority} Priority
-                    </span>
-                    <h3
-                      className={`text-base font-black text-slate-900 leading-snug ${
-                        task.status === 'completed' ? 'line-through text-slate-400' : ''
-                      }`}
-                    >
-                      {task.title}
-                    </h3>
-                    {task.description && (
-                      <p className="text-xs text-slate-500 font-medium mt-1 line-clamp-2">
-                        {task.description}
-                      </p>
-                    )}
-                  </div>
-                </div>
+      {/* 4. CATEGORY PILL FILTERS (ALL, WORK, PERSONAL) */}
+      <div className="flex items-center gap-2 pt-1">
+        <button
+          type="button"
+          onClick={() => setSelectedCategory('All')}
+          className={`px-5 py-2.5 rounded-full text-xs font-black transition-all ${
+            selectedCategory === 'All'
+              ? 'bg-[#1E1B26] text-white shadow-md'
+              : 'bg-white text-slate-700 border border-slate-100 hover:bg-slate-50'
+          }`}
+        >
+          All
+        </button>
 
-                <span className="px-2.5 py-1 rounded-xl bg-slate-100 text-[10px] font-bold text-slate-600 shrink-0">
-                  {task.category}
+        <button
+          type="button"
+          onClick={() => setSelectedCategory('Work')}
+          className={`px-4 py-2.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${
+            selectedCategory === 'Work'
+              ? 'bg-[#1E1B26] text-white shadow-md'
+              : 'bg-white text-slate-700 border border-slate-100 hover:bg-slate-50'
+          }`}
+        >
+          <span>💼</span>
+          <span>Work</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setSelectedCategory('Personal')}
+          className={`px-4 py-2.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${
+            selectedCategory === 'Personal'
+              ? 'bg-[#1E1B26] text-white shadow-md'
+              : 'bg-white text-slate-700 border border-slate-100 hover:bg-slate-50'
+          }`}
+        >
+          <span>👤</span>
+          <span>Personal</span>
+        </button>
+
+        <button
+          type="button"
+          className="w-10 h-10 rounded-full bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-700 ml-auto shrink-0 shadow-xs"
+        >
+          <Star size={16} />
+        </button>
+      </div>
+
+      {/* 5. TIME SLOT HEADER (MORNING) */}
+      <div className="pt-2">
+        <div className="flex items-center justify-between pb-3">
+          <div className="flex items-center gap-1.5 text-slate-800 text-sm font-black tracking-tight">
+            <span>🌤️</span>
+            <span>Morning</span>
+          </div>
+          <span className="text-xs font-bold text-slate-400">Today</span>
+        </div>
+
+        {/* TIME-SLOTTED TASKS LIST */}
+        <div className="space-y-4">
+          {filteredTasks.map((task) => (
+            <div key={task.id} className="flex items-start gap-3">
+              {/* Left Column: Time & Vertical Line */}
+              <div className="w-14 shrink-0 text-center pt-1">
+                <span className="text-sm font-black text-slate-900 block leading-tight">
+                  {task.time.split(' ')[0]}
                 </span>
+                <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
+                  {task.time.split(' ')[1]}
+                </span>
+
+                {/* Vertical Timeline Line */}
+                <div className="w-0.5 h-12 bg-slate-200 mx-auto my-2 rounded-full opacity-60" />
               </div>
 
-              {/* CARD FOOTER: DUE DATE & ASSIGNEE AVATARS */}
-              <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-slate-500">
-                <div className="flex items-center gap-1.5">
-                  <Clock size={13} className="text-purple-500" />
-                  <span>
-                    {task.dueDate} • {task.dueTime}
-                  </span>
+              {/* Right Column: Soft Clay Task Card */}
+              <div className="flex-1 bg-white rounded-[28px] p-5 shadow-sm border border-slate-100 space-y-3">
+                <div className="space-y-1">
+                  <h3 className="text-base font-black text-slate-900 leading-snug">
+                    {task.title}
+                  </h3>
+                  {task.description && (
+                    <p className="text-xs text-slate-400 font-medium leading-relaxed">
+                      {task.description}
+                    </p>
+                  )}
+                  {task.timeRange && (
+                    <div className="flex items-center gap-1 text-[11px] font-bold text-slate-400 pt-0.5">
+                      <Clock size={12} />
+                      <span>{task.timeRange}</span>
+                    </div>
+                  )}
                 </div>
 
-                {/* Assignee Avatars */}
-                {task.assignees && task.assignees.length > 0 && (
+                {/* Bottom Row inside Card: Assignees & Action Button/Status */}
+                <div className="flex items-center justify-between pt-1">
+                  {/* Assignee Avatars */}
                   <div className="flex -space-x-2 overflow-hidden">
-                    {task.assignees.map((st) => (
+                    {task.assignees?.map((st) => (
                       <img
                         key={st.id}
                         src={st.avatar}
                         alt={st.name}
-                        className="inline-block h-6 w-6 rounded-full ring-2 ring-white object-cover"
+                        className="inline-block h-7 w-7 rounded-full ring-2 ring-white object-cover"
                       />
                     ))}
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-[9px] font-black text-white ring-2 ring-white">
+                      +4
+                    </div>
                   </div>
-                )}
+
+                  {/* Action Button: Meet / In Progress Badge */}
+                  {task.meetLink ? (
+                    <a
+                      href={task.meetLink}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-4 py-2 rounded-2xl bg-[#0066FF] text-white text-xs font-bold hover:bg-blue-700 transition-colors shadow-xs flex items-center gap-1.5"
+                    >
+                      <Video size={14} />
+                      <span>Meet</span>
+                    </a>
+                  ) : task.status === 'In Progress' ? (
+                    <span className="px-3.5 py-1.5 rounded-full bg-[#B282FF] text-white text-[10px] font-black uppercase tracking-wider flex items-center gap-1 shadow-xs">
+                      <span>●</span>
+                      <span>In Progress</span>
+                    </span>
+                  ) : null}
+                </div>
               </div>
-            </motion.div>
-          ))
-        ) : (
-          <div className="text-center py-12 bg-white rounded-[32px] border border-dashed border-slate-200 p-6 space-y-2">
-            <CheckCircle2 size={36} className="mx-auto text-slate-300" />
-            <h4 className="text-sm font-black text-slate-700">Tidak ada tugas di kategori ini</h4>
-            <p className="text-xs text-slate-400 font-medium">
-              Semua tugas bersih! Klik tombol + di atas untuk mencatat tugas baru.
-            </p>
-          </div>
-        )}
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* 5. MODAL ADD NEW TASK (PRESIS DENGAN REFERENSI GAMBAR SCREEN 3) */}
+      {/* 6. MODAL ADD NEW TASK (PRESIS DENGAN SCREEN 3 REFERENSI) */}
       <AnimatePresence>
         {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
@@ -419,40 +354,47 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser, students }) =
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="w-full max-w-md bg-white rounded-[32px] p-6 shadow-2xl border border-slate-100 space-y-4 max-h-[90vh] overflow-y-auto"
+              className="w-full max-w-md bg-white rounded-[36px] p-6 shadow-2xl border border-slate-100 space-y-4 max-h-[90vh] overflow-y-auto"
             >
               {/* Modal Header */}
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <h3 className="text-lg font-black text-slate-900">Add New Task</h3>
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="p-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 transition-colors"
+                  className="p-1 text-slate-400 hover:text-slate-700"
                 >
-                  <X size={18} />
+                  <X size={20} />
+                </button>
+                <h3 className="text-base font-black text-slate-900">Add New Task</h3>
+                <button
+                  type="button"
+                  onClick={handleCreateTask}
+                  className="w-7 h-7 rounded-full bg-slate-100 text-slate-800 flex items-center justify-center hover:bg-slate-200"
+                >
+                  ✓
                 </button>
               </div>
 
-              {/* Form Input */}
+              {/* Form Fields */}
               <form onSubmit={handleCreateTask} className="space-y-4">
                 {/* Task Title */}
                 <div className="space-y-1">
-                  <label className="text-xs font-extrabold text-slate-700 block">
+                  <label className="text-xs font-black text-slate-800 block">
                     Task Title
                   </label>
                   <input
                     type="text"
                     required
-                    placeholder="Contoh: Finish landing page design"
+                    placeholder="Finish landing page design"
                     value={newTitle}
                     onChange={(e) => setNewTitle(e.target.value)}
-                    className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                    className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-100 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-400"
                   />
                 </div>
 
                 {/* Description */}
                 <div className="space-y-1">
-                  <label className="text-xs font-extrabold text-slate-700 block">
+                  <label className="text-xs font-black text-slate-800 block">
                     Description
                   </label>
                   <textarea
@@ -460,58 +402,66 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser, students }) =
                     placeholder="Design the new landing page for the product launch."
                     value={newDesc}
                     onChange={(e) => setNewDesc(e.target.value)}
-                    className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                    className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-100 text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-400"
                   />
                 </div>
 
                 {/* Due Date & Time */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-xs font-extrabold text-slate-700 block">
-                      Due Date
-                    </label>
+                <div className="space-y-1">
+                  <label className="text-xs font-black text-slate-800 block">
+                    Due Date & time
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
                     <input
                       type="date"
                       value={newDate}
                       onChange={(e) => setNewDate(e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                      className="w-full px-3 py-2.5 rounded-2xl bg-slate-50 border border-slate-100 text-xs font-bold text-slate-900 focus:outline-none"
                     />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-xs font-extrabold text-slate-700 block">
-                      Time
-                    </label>
                     <input
                       type="time"
                       value={newTime}
                       onChange={(e) => setNewTime(e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                      className="w-full px-3 py-2.5 rounded-2xl bg-slate-50 border border-slate-100 text-xs font-bold text-slate-900 focus:outline-none"
                     />
                   </div>
                 </div>
 
-                {/* Priority Selection */}
+                {/* Meet Link Option */}
+                <div className="space-y-1">
+                  <label className="text-xs font-black text-slate-800 block">
+                    Google Meet / Zoom Link (Optional)
+                  </label>
+                  <input
+                    type="url"
+                    placeholder="https://meet.google.com/abc-defg-hij"
+                    value={newMeetLink}
+                    onChange={(e) => setNewMeetLink(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-2xl bg-slate-50 border border-slate-100 text-xs font-medium text-slate-900 focus:outline-none"
+                  />
+                </div>
+
+                {/* Priority Selector */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-extrabold text-slate-700 block">
+                  <label className="text-xs font-black text-slate-800 block">
                     Priority
                   </label>
                   <div className="grid grid-cols-3 gap-2">
-                    {(['low', 'medium', 'high'] as const).map((p) => {
+                    {(['Low', 'Medium', 'High'] as const).map((p) => {
                       const isSelected = newPriority === p;
                       return (
                         <button
                           key={p}
                           type="button"
                           onClick={() => setNewPriority(p)}
-                          className={`py-2 rounded-xl text-xs font-extrabold capitalize transition-all border ${
+                          className={`py-2 rounded-full text-xs font-extrabold transition-all border ${
                             isSelected
-                              ? p === 'high'
-                                ? 'bg-rose-500 text-white border-rose-500 shadow-xs'
-                                : p === 'medium'
-                                ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
-                                : 'bg-emerald-500 text-white border-emerald-500 shadow-xs'
-                              : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                              ? p === 'High'
+                                ? 'bg-rose-100 text-rose-700 border-rose-300'
+                                : p === 'Medium'
+                                ? 'bg-amber-100 text-amber-800 border-amber-300'
+                                : 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                              : 'bg-slate-50 text-slate-500 border-slate-100'
                           }`}
                         >
                           {p}
@@ -521,26 +471,25 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser, students }) =
                   </div>
                 </div>
 
-                {/* Category / Project Selection */}
+                {/* Category / Project */}
                 <div className="space-y-1">
-                  <label className="text-xs font-extrabold text-slate-700 block">
-                    Category / Project
+                  <label className="text-xs font-black text-slate-800 block">
+                    Project / Category
                   </label>
                   <select
                     value={newCategory}
                     onChange={(e) => setNewCategory(e.target.value as any)}
-                    className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                    className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-100 text-xs font-bold text-slate-900 focus:outline-none"
                   >
-                    <option value="Work">💼 Work / Kuliah</option>
-                    <option value="Personal">👤 Personal</option>
-                    <option value="Organisasi">👥 Organisasi</option>
+                    <option value="Work">💼 Website Redesign / Kuliah</option>
+                    <option value="Personal">👤 Personal Task</option>
                   </select>
                 </div>
 
-                {/* Submit Button */}
+                {/* Create Task Submit */}
                 <button
                   type="submit"
-                  className="w-full py-3.5 rounded-2xl bg-[#A088F2] text-white text-xs font-black hover:bg-purple-600 transition-colors shadow-lg shadow-purple-200/60 mt-2"
+                  className="w-full py-3.5 rounded-2xl bg-[#7C5CFC] text-white text-xs font-black hover:bg-purple-600 transition-colors shadow-lg shadow-purple-200/60 mt-2"
                 >
                   Create Task
                 </button>
