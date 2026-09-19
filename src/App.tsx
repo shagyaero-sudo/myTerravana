@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Header } from './components/Header';
 import { Navbar } from './components/Navbar';
 import { DashboardView } from './components/DashboardView';
-import { TweeterraView } from './components/TweeterraView';
+import { TasksView } from './components/TasksView';
 import { TerraquizView } from './components/TerraquizView';
 import { TerrafinderView } from './components/TerrafinderView';
 import { StudentDetailModal } from './components/StudentDetailModal';
@@ -14,24 +14,21 @@ import {
   MOCK_STUDENTS,
   MOCK_ANNOUNCEMENT,
   MOCK_AGENDAS,
-  MOCK_LEADERBOARD,
-  MOCK_POSTS,
 } from './data/mockData';
 
-import { TabType, StudentUser, AgendaItem, Post, PostComment } from './types';
+import { TabType, StudentUser, AgendaItem } from './types';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [currentUser, setCurrentUser] = useState<StudentUser>(CURRENT_USER);
   const [students, setStudents] = useState<StudentUser[]>(MOCK_STUDENTS);
   const [agendas, setAgendas] = useState<AgendaItem[]>(MOCK_AGENDAS);
-  const [posts, setPosts] = useState<Post[]>(MOCK_POSTS);
 
   // Modals state
   const [selectedStudent, setSelectedStudent] = useState<StudentUser | null>(null);
   const [isAddAgendaOpen, setIsAddAgendaOpen] = useState(false);
 
-  // Total students count representation (170 university students)
+  // Total students count representation
   const TOTAL_COHORT_SIZE = 170;
 
   // Mastered count calculation
@@ -44,8 +41,8 @@ export default function App() {
   );
 
   // Toggle mode isOfficer
-  const handleToggleOfficerMode = (isOfficer: boolean) => {
-    setCurrentUser((prev) => ({ ...prev, is_officer: isOfficer }));
+  const handleToggleOfficerMode = () => {
+    setCurrentUser((prev) => ({ ...prev, is_officer: !prev.is_officer }));
   };
 
   // Handler Update Profil Mandiri
@@ -63,79 +60,11 @@ export default function App() {
   };
 
   // Agenda actions
-  const handleToggleAgenda = (id: string) => {
-    setAgendas((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, is_completed: !item.is_completed } : item
-      )
-    );
-  };
-
   const handleAddAgenda = (newAgenda: AgendaItem) => {
     setAgendas((prev) => [newAgenda, ...prev]);
   };
 
-  // Tweeterra actions
-  const handleAddPost = (newPost: Post) => {
-    setPosts((prev) => [newPost, ...prev]);
-  };
-
-  const handleToggleLike = (postId: string) => {
-    setPosts((prev) =>
-      prev.map((post) => {
-        if (post.id === postId) {
-          const isLiked = !post.is_liked;
-          return {
-            ...post,
-            is_liked: isLiked,
-            likes_count: isLiked ? post.likes_count + 1 : Math.max(0, post.likes_count - 1),
-          };
-        }
-        return post;
-      })
-    );
-  };
-
-  const handleAddComment = (postId: string, comment: PostComment) => {
-    setPosts((prev) =>
-      prev.map((post) => {
-        if (post.id === postId) {
-          return {
-            ...post,
-            comments: [...post.comments, comment],
-          };
-        }
-        return post;
-      })
-    );
-  };
-
-  const handleDeletePost = (postId: string) => {
-    setPosts((prev) => prev.filter((p) => p.id !== postId));
-  };
-
-  const handleEditPost = (postId: string, newContent: string) => {
-    setPosts((prev) =>
-      prev.map((p) => (p.id === postId ? { ...p, content: newContent } : p))
-    );
-  };
-
-  const handleReportPost = (postId: string) => {
-    console.log(`Post ${postId} dilaporkan.`);
-  };
-
   // Student profile & mastery actions
-  const handleSelectStudentByName = (studentName: string) => {
-    const found = students.find(
-      (s) =>
-        s.name.toLowerCase() === studentName.toLowerCase() ||
-        s.nickname.toLowerCase() === studentName.toLowerCase()
-    );
-    if (found) {
-      setSelectedStudent(found);
-    }
-  };
-
   const handleToggleMastered = (studentId: string) => {
     setStudents((prev) =>
       prev.map((s) => (s.id === studentId ? { ...s, mastered: !s.mastered } : s))
@@ -169,37 +98,27 @@ export default function App() {
                 currentUser={currentUser}
                 announcement={MOCK_ANNOUNCEMENT}
                 agendas={agendas}
-                onToggleAgenda={handleToggleAgenda}
-                onOpenAddAgenda={() => setIsAddAgendaOpen(true)}
                 students={students}
-                leaderboard={MOCK_LEADERBOARD}
                 masteredCount={currentMasteredCount}
                 totalStudents={TOTAL_COHORT_SIZE}
                 onNavigateTab={setActiveTab}
-                onOpenProfile={() => setSelectedStudent(currentUser)}
+                onSelectStudent={setSelectedStudent}
                 onToggleOfficerMode={handleToggleOfficerMode}
               />
             </motion.div>
           )}
 
-          {activeTab === 'tweeterra' && (
+          {activeTab === 'tasks' && (
             <motion.div
-              key="tab-tweeterra"
+              key="tab-tasks"
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.22, ease: 'easeOut' }}
             >
-              <TweeterraView
+              <TasksView
                 currentUser={currentUser}
-                posts={posts}
-                onAddPost={handleAddPost}
-                onToggleLike={handleToggleLike}
-                onAddComment={handleAddComment}
-                onSelectStudent={handleSelectStudentByName}
-                onDeletePost={handleDeletePost}
-                onEditPost={handleEditPost}
-                onReportPost={handleReportPost}
+                students={students}
               />
             </motion.div>
           )}

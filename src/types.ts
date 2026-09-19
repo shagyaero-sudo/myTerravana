@@ -1,4 +1,4 @@
-export type TabType = 'dashboard' | 'tweeterra' | 'terraquiz' | 'terrafinder';
+export type TabType = 'dashboard' | 'tasks' | 'terraquiz' | 'terrafinder';
 
 export type RegionType =
   | 'All'
@@ -21,42 +21,19 @@ export interface StudentUser {
   wa_number: string; // e.g. "6281234567890"
   instagram?: string;
   avatar: string;
-  birthday?: string; // e.g. "18 September"
+  birthday?: string;
   is_birthday_today?: boolean;
   major: string;
   hobbies: string[];
   motto?: string;
-  mastered: boolean; // For Terraquiz KPI
-  is_officer?: boolean; // NEW: Penanda akun BPH / Pengurus Angkatan
-  password?: string; // NEW: Password sementara / diubah user
+  mastered: boolean;
+  is_officer?: boolean;
+  class_code?: 'A' | 'B' | 'C' | 'D';
+  password?: string;
   emergency_contact?: {
     relation: string;
     phone: string;
   };
-}
-
-export interface PostComment {
-  id: string;
-  author_name: string;
-  author_avatar: string;
-  content: string;
-  created_at: string;
-}
-
-export interface Post {
-  id: string;
-  author_id: string;
-  author_name: string;
-  author_nickname: string;
-  author_avatar: string;
-  author_kelompok: number;
-  content: string;
-  image_url?: string;
-  created_at: string;
-  likes_count: number;
-  is_liked?: boolean;
-  comments: PostComment[];
-  category: 'Pengumuman' | 'Kaderisasi' | 'Akademik' | 'Keseruan' | 'Curhat';
 }
 
 export interface AgendaItem {
@@ -75,7 +52,7 @@ export interface Announcement {
   title: string;
   category: 'Kaderisasi' | 'Akademik' | 'Darurat';
   date: string;
-  countdown_target: string; // ISO date string
+  countdown_target: string;
   priority: 'urgent' | 'important' | 'info';
   description: string;
   action_label?: string;
