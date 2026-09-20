@@ -241,11 +241,8 @@ export const TerraquizView: React.FC<TerraquizViewProps> = ({
 
         <div className="text-center mb-4">
           <h3 className="text-sm font-black text-slate-900">
-            Siapakah nama rekan di foto ini?
+            Siapa nama orang ini?
           </h3>
-          <p className="text-[11px] text-slate-400 font-medium mt-0.5">
-            Pilih 1 dari 4 pilihan jawaban:
-          </p>
         </div>
 
         <div className="w-full grid grid-cols-1 gap-2">

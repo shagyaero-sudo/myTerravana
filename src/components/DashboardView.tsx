@@ -221,12 +221,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <div className="space-y-2.5 max-w-[70%] sm:max-w-[75%]">
             <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/20 text-[9px] font-extrabold uppercase tracking-wider text-purple-100 backdrop-blur-md">
               <Sparkles size={10} />
-              <span>TERRAQUIZ PROGRESS CHALLENGE</span>
+              <span>TERRAQUIZ CHALLENGE</span>
             </div>
 
             <div>
               <h3 className="text-xl sm:text-2xl font-black tracking-tight leading-tight">
-                Hafalan Terravana 2026
+                Hafalan Terravana
               </h3>
               <p className="text-[11px] font-semibold text-purple-100/90 mt-0.5">
                 {masteredCount} dari {totalStudents} Mahasiswa Telah Dikuasai
@@ -433,7 +433,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
               <div className="relative z-10 space-y-1">
                 <h4 className="text-lg font-black leading-tight">Portal myITS</h4>
-                <p className="text-xs font-bold text-blue-950/70">Akses cepat layanan</p>
+                <p className="text-xs font-bold text-blue-950/70">Akses shortcut</p>
               </div>
 
               {/* 4 MENU SHORTCUT CERAH 2-KOLOM (HEMAT VERTICAL SPACE) */}
