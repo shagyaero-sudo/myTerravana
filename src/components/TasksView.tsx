@@ -407,9 +407,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
               {/* Right Column: Card */}
               <div
                 className={`flex-1 rounded-[28px] p-4 border transition-all space-y-2.5 shadow-xs relative ${
-                  task.type === 'event'
-                    ? 'bg-blue-50/50 border-blue-200/80'
-                    : task.isCompleted
+                  task.isCompleted
                     ? 'bg-slate-50/80 border-slate-200 opacity-60'
                     : 'bg-white border-slate-100'
                 }`}
@@ -469,7 +467,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
                     Details &gt;
                   </button>
 
-                  {task.type === 'task' ? (
+                  {task.type === 'task' && (
                     <button
                       type="button"
                       onClick={() => handleToggleComplete(task.id)}
@@ -491,10 +489,6 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
                         </>
                       )}
                     </button>
-                  ) : (
-                    <span className="text-[10px] font-extrabold text-blue-700 bg-blue-100/80 px-2.5 py-1 rounded-xl">
-                      📅 Jadwal Acara
-                    </span>
                   )}
                 </div>
               </div>

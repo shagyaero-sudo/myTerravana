@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import {
   Clock,
   MapPin,
@@ -8,7 +8,6 @@ import {
   ExternalLink,
   ShieldCheck,
   Sparkles,
-  BookOpen,
 } from 'lucide-react';
 import { StudentUser } from '../types';
 
@@ -130,16 +129,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   // Custom Icon TikTok
   const TikTokIcon = () => (
-    <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+    <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
       <path d="M12.525 2.015a.056.056 0 0 0-.01 0 10.201 10.201 0 0 1-5.188 1.483.052.052 0 0 0-.052.052v3.136a.052.052 0 0 0 .052.052c1.782 0 3.437-.582 4.786-1.567v8.988a6.34 6.34 0 1 1-6.34-6.34c.48 0 .945.053 1.393.155a.052.052 0 0 0 .062-.051V4.686a.052.052 0 0 0-.041-.051A9.52 9.52 0 0 0 6.098 4.5a9.535 9.535 0 1 0 9.535 9.535V8.12a8.88 8.88 0 0 0 4.314 1.115.052.052 0 0 0 .052-.052V6.047a.052.052 0 0 0-.052-.052 5.673 5.673 0 0 1-4.148-1.78 5.632 5.632 0 0 1-1.222-2.148.056.056 0 0 0-.052-.052h-2.002z"/>
     </svg>
   );
 
   return (
-    <div id="dashboard-view-root" className="max-w-2xl mx-auto space-y-5 pt-2 pb-36 font-sans">
-      {/* 1. TOP BAR: PROFILE AVATAR (BISA DIKLIK) & GREETING */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+    <div id="dashboard-view-root" className="max-w-2xl mx-auto space-y-4 pt-2 pb-36 font-sans">
+      {/* 1. TOP BAR: PROFILE AVATAR & GREETING */}
+      <div className="flex items-center justify-between px-1">
+        <div className="flex items-center gap-2.5">
           <button
             type="button"
             onClick={() => onSelectStudent(currentUser)}
@@ -149,48 +148,47 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <img
               src={currentUser.avatar}
               alt={currentUser.name}
-              className="w-11 h-11 rounded-full object-cover ring-2 ring-purple-200 group-hover:ring-purple-400 transition-all shadow-xs"
+              className="w-10 h-10 rounded-full object-cover ring-2 ring-purple-200 group-hover:ring-purple-400 transition-all shadow-xs"
             />
-            <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full ring-2 ring-white" />
+            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full ring-2 ring-white" />
           </button>
 
           <div>
-            <div className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-slate-400 leading-none">
+            <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 leading-none">
               <span>DASHBOARD HOME</span>
             </div>
             <h1
               onClick={onToggleOfficerMode}
-              className="text-lg font-black tracking-tight text-slate-900 cursor-pointer hover:text-indigo-600 transition-colors flex items-center gap-1.5 mt-0.5"
+              className="text-base font-black tracking-tight text-slate-900 cursor-pointer hover:text-indigo-600 transition-colors flex items-center gap-1 mt-0.5"
               title={currentUser.is_officer ? 'Mode BPH Aktif (Klik untuk matikan)' : 'Klik untuk masuk mode BPH'}
             >
               <span>Halo, {currentUser.nickname}! 👋</span>
               {currentUser.is_officer && (
-                <ShieldCheck size={16} className="text-indigo-600 inline-block" />
+                <ShieldCheck size={14} className="text-indigo-600 inline-block" />
               )}
             </h1>
           </div>
         </div>
 
         {currentUser.is_officer && (
-          <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-slate-900 text-white shadow-xs">
+          <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-slate-900 text-white shadow-xs">
             BPH / OFFICER
           </span>
         )}
       </div>
 
-      {/* 2. PROGRESS CHALLENGE TERRAQUIZ (HERO BANNER COMPACT) */}
+      {/* 2. HERO BANNER: TERRAQUIZ PROGRESS (FULL 2-KOLOM MOBILE) */}
       <div
         onClick={() => onNavigateTab('terraquiz')}
-        className="relative bg-[#A088F2] rounded-[32px] p-5 text-white shadow-xl shadow-purple-200/50 overflow-hidden cursor-pointer group transition-all hover:scale-[1.005]"
+        className="relative bg-[#A088F2] rounded-[28px] p-4 sm:p-5 text-white shadow-xl shadow-purple-200/50 overflow-hidden cursor-pointer group transition-all hover:scale-[1.005]"
       >
-        {/* Animated Soft Clay Spheres SVG */}
         <motion.div
           animate={{
-            y: [0, -8, 0],
+            y: [0, -6, 0],
             rotate: [0, 5, 0],
           }}
           transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute -right-6 -bottom-6 w-32 h-32 pointer-events-none opacity-80"
+          className="absolute -right-6 -bottom-6 w-28 h-28 pointer-events-none opacity-80"
         >
           <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
             <defs>
@@ -204,23 +202,22 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </svg>
         </motion.div>
 
-        <div className="relative z-10 flex items-center justify-between gap-3">
-          <div className="space-y-2.5 max-w-[70%] sm:max-w-[75%]">
-            <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/20 text-[9px] font-extrabold uppercase tracking-wider text-purple-100 backdrop-blur-md">
-              <Sparkles size={10} />
-              <span>TERRAQUIZ PROGRESS CHALLENGE</span>
+        <div className="relative z-10 flex items-center justify-between gap-2">
+          <div className="space-y-2 max-w-[72%]">
+            <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/20 text-[8px] sm:text-[9px] font-extrabold uppercase tracking-wider text-purple-100 backdrop-blur-md">
+              <Sparkles size={9} />
+              <span>TERRAQUIZ CHALLENGE</span>
             </div>
 
             <div>
-              <h3 className="text-xl sm:text-2xl font-black tracking-tight leading-tight">
-                Hafalan Terravana 2026
+              <h3 className="text-lg sm:text-2xl font-black tracking-tight leading-snug">
+                Hafalan Terravana
               </h3>
-              <p className="text-[11px] font-semibold text-purple-100/90 mt-0.5">
+              <p className="text-[10px] font-semibold text-purple-100/90 mt-0.5 line-clamp-1">
                 {masteredCount} dari {totalStudents} Mahasiswa Telah Dikuasai
               </p>
             </div>
 
-            {/* Stack Avatar + Button */}
             <div className="flex items-center gap-2 pt-0.5">
               <div className="flex -space-x-2 overflow-hidden shrink-0">
                 {topMasteredStudents.length > 0
@@ -233,7 +230,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                           e.stopPropagation();
                           onSelectStudent(st);
                         }}
-                        className="inline-block h-7 w-7 rounded-full ring-2 ring-[#A088F2] object-cover hover:scale-110 transition-transform"
+                        className="inline-block h-6 w-6 rounded-full ring-2 ring-[#A088F2] object-cover hover:scale-110 transition-transform"
                       />
                     ))
                   : students.slice(0, 4).map((st) => (
@@ -245,7 +242,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                           e.stopPropagation();
                           onSelectStudent(st);
                         }}
-                        className="inline-block h-7 w-7 rounded-full ring-2 ring-[#A088F2] object-cover hover:scale-110 transition-transform"
+                        className="inline-block h-6 w-6 rounded-full ring-2 ring-[#A088F2] object-cover hover:scale-110 transition-transform"
                       />
                     ))}
                 <div
@@ -253,7 +250,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     e.stopPropagation();
                     onNavigateTab('terrafinder');
                   }}
-                  className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-[9px] font-black text-white ring-2 ring-[#A088F2] hover:bg-slate-800"
+                  className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-900 text-[8px] font-black text-white ring-2 ring-[#A088F2]"
                 >
                   +{totalStudents - 4}
                 </div>
@@ -265,19 +262,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   e.stopPropagation();
                   onNavigateTab('terraquiz');
                 }}
-                className="px-3 py-1.5 rounded-xl bg-white text-slate-900 text-[11px] font-black hover:bg-slate-100 transition-all shadow-xs flex items-center gap-1 group-hover:translate-x-0.5 shrink-0"
+                className="px-2.5 py-1 rounded-lg bg-white text-slate-900 text-[10px] font-black hover:bg-slate-100 transition-all shadow-xs flex items-center gap-0.5 shrink-0"
               >
-                <span>Mainkan Kuis</span>
-                <ChevronRight size={12} />
+                <span>Mainkan</span>
+                <ChevronRight size={10} />
               </button>
             </div>
           </div>
 
-          {/* RAMPING & COMPACT KPI CIRCLE */}
-          <div className="shrink-0 flex items-center justify-center">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white/15 border border-white/30 flex flex-col items-center justify-center backdrop-blur-md shadow-inner">
-              <span className="text-base sm:text-lg font-black leading-none">{kpiPercentage}%</span>
-              <span className="text-[8px] font-extrabold uppercase tracking-widest text-purple-200 mt-0.5">
+          <div className="shrink-0 flex items-center justify-center pr-1">
+            <div className="w-13 h-13 sm:w-16 sm:h-16 rounded-full bg-white/15 border border-white/30 flex flex-col items-center justify-center backdrop-blur-md shadow-inner">
+              <span className="text-sm sm:text-lg font-black leading-none">{kpiPercentage}%</span>
+              <span className="text-[7px] font-extrabold uppercase tracking-widest text-purple-200 mt-0.5">
                 KPI
               </span>
             </div>
@@ -285,225 +281,215 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
       </div>
 
-      {/* 3. BENTO CARDS SECTION */}
-      <div className="space-y-3 pt-1">
-        <div className="flex items-center justify-between px-1">
-          <h3 className="text-lg font-black text-slate-900 tracking-tight">
-            Today's Academic
-          </h3>
-          <button
-            type="button"
-            onClick={() => onNavigateTab('tasks')}
-            className="text-xs font-bold text-slate-400 hover:text-slate-800 transition-colors flex items-center gap-1"
+      {/* HEADER SECTION TITLE */}
+      <div className="flex items-center justify-between px-1 pt-1">
+        <h3 className="text-base font-black text-slate-900 tracking-tight">
+          Agenda Hari Ini
+        </h3>
+        <button
+          type="button"
+          onClick={() => onNavigateTab('tasks')}
+          className="text-[11px] font-bold text-slate-400 hover:text-slate-800 transition-colors flex items-center gap-0.5"
+        >
+          <span>Buka Tasks</span>
+          <ChevronRight size={11} />
+        </button>
+      </div>
+
+      {/* 3. MOBILE BENTO GRID 2-KOLOM SEJAJAR */}
+      <div className="grid grid-cols-2 gap-3">
+        {/* BENTO KIRI (1 KOLOM): JADWAL KULIAH HARI INI */}
+        <div className="col-span-1 relative bg-[#FFDA66] rounded-[26px] p-3.5 text-slate-900 shadow-md shadow-amber-100/60 flex flex-col justify-between overflow-hidden">
+          <motion.div
+            animate={{
+              rotate: [0, 15, -15, 0],
+              scale: [1, 1.05, 1],
+            }}
+            transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
+            className="absolute -right-5 -bottom-5 w-20 h-20 pointer-events-none opacity-80"
           >
-            <span>Buka Productivity</span>
-            <ChevronRight size={12} />
-          </button>
+            <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <radialGradient id="clayGold" cx="30%" cy="30%" r="70%">
+                  <stop offset="0%" stopColor="#FFFFFF" />
+                  <stop offset="50%" stopColor="#FFC837" />
+                  <stop offset="100%" stopColor="#E08200" />
+                </radialGradient>
+              </defs>
+              <rect x="30" y="30" width="140" height="140" rx="40" fill="url(#clayGold)" />
+            </svg>
+          </motion.div>
+
+          <div className="relative z-10 space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="px-2 py-0.5 rounded-full bg-white/80 text-[9px] font-black text-amber-950">
+                Jadwal Kuliah
+              </span>
+              <span className="text-[8px] font-black bg-amber-900/10 text-amber-900 px-1.5 py-0.5 rounded">
+                Kl. {currentUser.class_code || 'A'}
+              </span>
+            </div>
+
+            {/* TAB BAR HARI */}
+            <div className="flex items-center justify-between gap-0.5 bg-amber-950/10 p-0.5 rounded-xl">
+              {days.map((day) => {
+                const isActive = selectedDay === day;
+                return (
+                  <button
+                    key={day}
+                    type="button"
+                    onClick={() => setSelectedDay(day)}
+                    className={`flex-1 py-0.5 text-[8px] font-black rounded-lg transition-all ${
+                      isActive
+                        ? 'bg-slate-900 text-white shadow-2xs'
+                        : 'text-amber-950/70 hover:text-slate-900'
+                    }`}
+                  >
+                    {day.substring(0, 3)}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* DAFTAR MATKUL */}
+            <div className="space-y-1.5 min-h-[110px]">
+              {currentDayClasses.length > 0 ? (
+                currentDayClasses.map((item) => (
+                  <div
+                    key={item.id}
+                    className="p-2 rounded-xl bg-white/80 border border-white/90 backdrop-blur-xs space-y-1 shadow-2xs"
+                  >
+                    <h4 className="text-[10px] font-black text-slate-900 leading-snug line-clamp-2">
+                      {item.subject}
+                    </h4>
+                    <div className="flex flex-col gap-0.5 text-[8px] font-bold text-amber-950/80">
+                      <div className="flex items-center gap-1">
+                        <Clock size={9} />
+                        <span>{item.time}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <MapPin size={9} />
+                        <span>{item.room}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="p-3 text-center rounded-xl bg-white/60 text-[10px] font-bold text-amber-950/70">
+                  Libur / Tidak Ada Kelas Hari {selectedDay} 🎉
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="relative z-10 pt-2 mt-2 border-t border-amber-900/10">
+            <a
+              href="https://mia.its.ac.id/"
+              target="_blank"
+              rel="noreferrer"
+              className="text-[9px] font-black text-slate-900 flex items-center justify-between group"
+            >
+              <span>Presensi myITS</span>
+              <ChevronRight size={11} className="group-hover:translate-x-0.5 transition-transform" />
+            </a>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* KARTU KUNING PASTEL (BAR HARI & JADWAL MATKUL) */}
-          <div className="relative bg-[#FFDA66] rounded-[32px] p-5 text-slate-900 shadow-lg shadow-amber-200/40 flex flex-col justify-between space-y-4 overflow-hidden">
-            {/* Soft Clay Gold Gem SVG */}
+        {/* BENTO KANAN (1 KOLOM): PORTAL SHORTCUTS & MEDSOS TUMPUK */}
+        <div className="col-span-1 space-y-3 flex flex-col justify-between">
+          {/* PORTAL MYITS SHORTCUTS */}
+          <div className="relative bg-[#D0E5FF] rounded-[26px] p-3.5 text-slate-900 shadow-md shadow-blue-100/50 flex-1 flex flex-col justify-between overflow-hidden">
             <motion.div
-              animate={{
-                rotate: [0, 15, -15, 0],
-                scale: [1, 1.05, 1],
-              }}
-              transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
-              className="absolute -right-4 -bottom-4 w-28 h-28 pointer-events-none opacity-80"
+              animate={{ y: [0, -6, 0] }}
+              transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+              className="absolute -right-5 -bottom-5 w-18 h-18 pointer-events-none opacity-80"
             >
               <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <defs>
-                  <radialGradient id="clayGold" cx="30%" cy="30%" r="70%">
+                  <radialGradient id="clayBlue" cx="30%" cy="30%" r="70%">
                     <stop offset="0%" stopColor="#FFFFFF" />
-                    <stop offset="50%" stopColor="#FFC837" />
-                    <stop offset="100%" stopColor="#E08200" />
+                    <stop offset="50%" stopColor="#7ABCFF" />
+                    <stop offset="100%" stopColor="#3B82F6" />
                   </radialGradient>
                 </defs>
-                <rect x="30" y="30" width="140" height="140" rx="40" fill="url(#clayGold)" />
+                <circle cx="100" cy="100" r="75" fill="url(#clayBlue)" />
               </svg>
             </motion.div>
 
-            <div className="relative z-10 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="inline-block px-3 py-1 rounded-full bg-white/80 text-[10px] font-extrabold text-amber-900">
-                  Jadwal Kuliah
-                </span>
-                <span className="text-[10px] font-black bg-amber-900/10 text-amber-900 px-2 py-0.5 rounded-md">
-                  Kelas {currentUser.class_code || 'A'}
-                </span>
-              </div>
-
-              {/* BAR HARI (SENIN - JUMAT) */}
-              <div className="flex items-center justify-between gap-1 bg-amber-950/10 p-1 rounded-2xl">
-                {days.map((day) => {
-                  const isActive = selectedDay === day;
-                  return (
-                    <button
-                      key={day}
-                      type="button"
-                      onClick={() => setSelectedDay(day)}
-                      className={`flex-1 py-1 text-[10px] font-extrabold rounded-xl transition-all ${
-                        isActive
-                          ? 'bg-slate-900 text-white shadow-xs'
-                          : 'text-amber-950/70 hover:text-slate-900'
-                      }`}
-                    >
-                      {day.substring(0, 3)}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* LIST MATKUL PER HARI */}
-              <div className="space-y-2 pt-0.5">
-                {currentDayClasses.length > 0 ? (
-                  currentDayClasses.map((item) => (
-                    <div
-                      key={item.id}
-                      className="p-2.5 rounded-2xl bg-white/80 border border-white/90 backdrop-blur-xs space-y-1 shadow-2xs"
-                    >
-                      <h4 className="text-xs font-black text-slate-900 leading-snug">
-                        {item.subject}
-                      </h4>
-                      <div className="flex items-center justify-between text-[10px] font-bold text-amber-950/80">
-                        <div className="flex items-center gap-1">
-                          <Clock size={11} />
-                          <span>{item.time}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <MapPin size={11} />
-                          <span>{item.room}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="p-3 text-center rounded-2xl bg-white/60 text-xs font-bold text-amber-950/70">
-                    Tidak ada jadwal kuliah di hari {selectedDay}. 🎉
-                  </div>
-                )}
-              </div>
+            <div className="relative z-10 space-y-0.5">
+              <h4 className="text-xs font-black leading-tight">Portal myITS</h4>
+              <p className="text-[9px] font-bold text-blue-950/70">Akses cepat layanan</p>
             </div>
 
-            {/* ACTION LINK KE MYITS ACADEMICS PRESENSI */}
-            <div className="relative z-10 pt-2 border-t border-amber-900/10">
+            <div className="relative z-10 space-y-1.5 pt-2">
+              <a
+                href="https://classroom.its.ac.id/auth/oidc"
+                target="_blank"
+                rel="noreferrer"
+                className="p-2 rounded-xl bg-slate-900 text-white text-[9px] font-extrabold hover:bg-slate-800 transition-colors shadow-xs flex items-center justify-between"
+              >
+                <span>Classroom</span>
+                <ExternalLink size={10} />
+              </a>
+
               <a
                 href="https://mia.its.ac.id/"
                 target="_blank"
                 rel="noreferrer"
-                className="text-xs font-black text-slate-900 hover:text-amber-950 transition-colors flex items-center justify-between group"
+                className="p-2 rounded-xl bg-white text-slate-900 text-[9px] font-extrabold hover:bg-slate-50 transition-colors shadow-xs flex items-center justify-between"
               >
-                <span>Buka myITS Academics Presensi</span>
-                <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                <span>Academics</span>
+                <ExternalLink size={10} />
+              </a>
+
+              <a
+                href="https://kemahasiswaan.its.ac.id/portofolio/kegiatan"
+                target="_blank"
+                rel="noreferrer"
+                className="p-2 rounded-xl bg-white text-slate-900 text-[9px] font-extrabold hover:bg-slate-50 transition-colors shadow-xs flex items-center justify-between"
+              >
+                <span>StudConn</span>
+                <ExternalLink size={10} />
+              </a>
+
+              <a
+                href="https://wali.its.ac.id"
+                target="_blank"
+                rel="noreferrer"
+                className="p-2 rounded-xl bg-white text-slate-900 text-[9px] font-extrabold hover:bg-slate-50 transition-colors shadow-xs flex items-center justify-between"
+              >
+                <span>Wali</span>
+                <ExternalLink size={10} />
               </a>
             </div>
           </div>
 
-          {/* RIGHT COLUMN: SHORTCUT MYITS PORTAL & MEDSOS */}
-          <div className="space-y-4 flex flex-col justify-between">
-            {/* KARTU BIRU MUDA (PORTAL MYITS SHORTCUTS CLEAN) */}
-            <div className="relative bg-[#D0E5FF] rounded-[32px] p-5 text-slate-900 shadow-lg shadow-blue-100/50 flex-1 flex flex-col justify-between space-y-3 overflow-hidden">
-              <motion.div
-                animate={{
-                  y: [0, -8, 0],
-                }}
-                transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
-                className="absolute -right-5 -bottom-5 w-24 h-24 pointer-events-none opacity-80"
-              >
-                <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <defs>
-                    <radialGradient id="clayBlue" cx="30%" cy="30%" r="70%">
-                      <stop offset="0%" stopColor="#FFFFFF" />
-                      <stop offset="50%" stopColor="#7ABCFF" />
-                      <stop offset="100%" stopColor="#3B82F6" />
-                    </radialGradient>
-                  </defs>
-                  <circle cx="100" cy="100" r="75" fill="url(#clayBlue)" />
-                </svg>
-              </motion.div>
-
-              <div className="relative z-10 space-y-1">
-                <h4 className="text-lg font-black leading-tight">
-                  Portal myITS Shortcuts
-                </h4>
-                <p className="text-xs font-bold text-blue-950/70">
-                  Akses cepat ke layanan resmi akademik ITS
-                </p>
-              </div>
-
-              {/* 4 REVISED MENU BUTTONS */}
-              <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                <a
-                  href="https://classroom.its.ac.id/auth/oidc"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="p-2.5 rounded-2xl bg-slate-900 text-white text-[11px] font-extrabold hover:bg-slate-800 transition-colors shadow-xs flex items-center justify-between"
-                >
-                  <span>myITS Classroom</span>
-                  <ExternalLink size={12} />
-                </a>
-
-                <a
-                  href="https://mia.its.ac.id/"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="p-2.5 rounded-2xl bg-white text-slate-900 text-[11px] font-extrabold hover:bg-slate-50 transition-colors shadow-xs flex items-center justify-between"
-                >
-                  <span>myITS Academics</span>
-                  <ExternalLink size={12} />
-                </a>
-
-                <a
-                  href="https://kemahasiswaan.its.ac.id/portofolio/kegiatan"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="p-2.5 rounded-2xl bg-white text-slate-900 text-[11px] font-extrabold hover:bg-slate-50 transition-colors shadow-xs flex items-center justify-between"
-                >
-                  <span>myITS StudConn</span>
-                  <ExternalLink size={12} />
-                </a>
-
-                <a
-                  href="https://wali.its.ac.id"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="p-2.5 rounded-2xl bg-white text-slate-900 text-[11px] font-extrabold hover:bg-slate-50 transition-colors shadow-xs flex items-center justify-between"
-                >
-                  <span>myITS Wali</span>
-                  <ExternalLink size={12} />
-                </a>
-              </div>
+          {/* FOLLOW US MEDSOS */}
+          <div className="bg-[#F5C7F7] rounded-[22px] p-2.5 text-slate-900 shadow-md shadow-pink-100/50 flex items-center justify-between gap-1">
+            <div className="pl-1">
+              <span className="text-[10px] font-black block leading-none">Follow us</span>
+              <span className="text-[8px] font-bold text-pink-950/70 mt-0.5 block">@terravana25</span>
             </div>
 
-            {/* KARTU PINK PASTEL (MEDSOS TERRAVANA 2026) */}
-            <div className="bg-[#F5C7F7] rounded-[32px] p-4 text-slate-900 shadow-lg shadow-pink-100/50 flex items-center justify-between gap-3">
-              <div>
-                <span className="text-xs font-black block">Follow us</span>
-                <span className="text-[10px] font-bold text-pink-950/70">@terravana25</span>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <a
-                  href="https://instagram.com/terravana25"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="w-9 h-9 rounded-full bg-white text-pink-600 flex items-center justify-center hover:scale-110 transition-transform shadow-xs"
-                  title="Instagram @terravana25"
-                >
-                  <Instagram size={17} />
-                </a>
-                <a
-                  href="https://tiktok.com/@terravana25"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="w-9 h-9 rounded-full bg-white text-slate-900 flex items-center justify-center hover:scale-110 transition-transform shadow-xs"
-                  title="TikTok @terravana25"
-                >
-                  <TikTokIcon />
-                </a>
-              </div>
+            <div className="flex items-center gap-1">
+              <a
+                href="https://instagram.com/terravana25"
+                target="_blank"
+                rel="noreferrer"
+                className="w-7 h-7 rounded-full bg-white text-pink-600 flex items-center justify-center shadow-2xs hover:scale-105 transition-transform"
+                title="Instagram @terravana25"
+              >
+                <Instagram size={13} />
+              </a>
+              <a
+                href="https://tiktok.com/@terravana25"
+                target="_blank"
+                rel="noreferrer"
+                className="w-7 h-7 rounded-full bg-white text-slate-900 flex items-center justify-center shadow-2xs hover:scale-105 transition-transform"
+                title="TikTok @terravana25"
+              >
+                <TikTokIcon />
+              </a>
             </div>
           </div>
         </div>
