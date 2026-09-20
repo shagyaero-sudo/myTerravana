@@ -169,7 +169,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </button>
 
           <div>
-            {/* HARI & TANGGAL REAL-TIME */}
             <div className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-slate-400 leading-none">
               <span>{getFormattedTodayDate()}</span>
             </div>
@@ -193,7 +192,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         )}
       </div>
 
-      {/* 2. PROGRESS CHALLENGE TERRAQUIZ (HERO BANNER COMPACT) */}
+      {/* 2. PROGRESS CHALLENGE TERRAQUIZ */}
       <div
         onClick={() => onNavigateTab('terraquiz')}
         className="relative bg-[#A088F2] rounded-[32px] p-5 text-white shadow-xl shadow-purple-200/50 overflow-hidden cursor-pointer group transition-all hover:scale-[1.005]"
@@ -297,7 +296,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
       </div>
 
-      {/* 3. BENTO CARDS SECTION (FULL LEGAR & MANJANG) */}
+      {/* 3. BENTO CARDS SECTION */}
       <div className="space-y-3 pt-1">
         <div className="flex items-center justify-between px-1">
           <h3 className="text-lg font-black text-slate-900 tracking-tight">
@@ -314,7 +313,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* KARTU KUNING PASTEL (BAR HARI & JADWAL MATKUL) */}
+          {/* KARTU KUNING PASTEL (JADWAL KULIAH) */}
           <div className="relative bg-[#FFDA66] rounded-[32px] p-5 text-slate-900 shadow-lg shadow-amber-200/40 flex flex-col justify-between space-y-4 overflow-hidden">
             <motion.div
               animate={{
@@ -346,7 +345,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </span>
               </div>
 
-              {/* BAR HARI (SENIN - JUMAT) */}
+              {/* BAR HARI */}
               <div className="flex items-center justify-between gap-1 bg-amber-950/10 p-1 rounded-2xl">
                 {days.map((day) => {
                   const isActive = selectedDay === day;
@@ -367,7 +366,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 })}
               </div>
 
-              {/* LIST MATKUL PER HARI */}
+              {/* LIST MATKUL */}
               <div className="space-y-2 pt-0.5">
                 {currentDayClasses.length > 0 ? (
                   currentDayClasses.map((item) => (
@@ -398,7 +397,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </div>
             </div>
 
-            {/* ACTION LINK KE MYITS ACADEMICS PRESENSI */}
             <div className="relative z-10 pt-2 border-t border-amber-900/10">
               <a
                 href="https://mia.its.ac.id/"
@@ -412,9 +410,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
           </div>
 
-          {/* KANAN: SHORTCUT MYITS PORTAL (WARNA SENADA + IKON) & MEDSOS */}
+          {/* KANAN: SHORTCUT MYITS PORTAL & MEDSOS */}
           <div className="space-y-4 flex flex-col justify-between">
-            {/* PORTAL MYITS SHORTCUTS */}
+            {/* PORTAL MYITS SHORTCUTS (REVISI 2 KOLOM CERAH) */}
             <div className="relative bg-[#D0E5FF] rounded-[32px] p-5 text-slate-900 shadow-lg shadow-blue-100/50 flex-1 flex flex-col justify-between space-y-4 overflow-hidden">
               <motion.div
                 animate={{ y: [0, -8, 0] }}
@@ -438,63 +436,63 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <p className="text-xs font-bold text-blue-950/70">Akses cepat layanan</p>
               </div>
 
-              {/* 4 MENU SHORTCUT DENGAN WARNA SENADA (SLATE-900) + IKON KHUSUS */}
-              <div className="relative z-10 space-y-2 pt-1">
+              {/* 4 MENU SHORTCUT CERAH 2-KOLOM (HEMAT VERTICAL SPACE) */}
+              <div className="relative z-10 grid grid-cols-2 gap-2 pt-1">
                 <a
                   href="https://classroom.its.ac.id/auth/oidc"
                   target="_blank"
                   rel="noreferrer"
-                  className="p-3 rounded-2xl bg-slate-900 text-white text-xs font-extrabold hover:bg-slate-800 transition-all shadow-xs flex items-center justify-between group"
+                  className="p-3 rounded-2xl bg-white border border-white/80 text-slate-900 text-xs font-extrabold hover:bg-slate-50 transition-all shadow-2xs flex items-center justify-between group"
                 >
-                  <div className="flex items-center gap-2.5">
-                    <BookOpen size={15} className="text-blue-300" />
+                  <div className="flex items-center gap-2">
+                    <BookOpen size={15} className="text-blue-600" />
                     <span>Classroom</span>
                   </div>
-                  <ExternalLink size={13} className="text-slate-400 group-hover:text-white transition-colors" />
+                  <ExternalLink size={12} className="text-slate-400 group-hover:text-blue-600 transition-colors" />
                 </a>
 
                 <a
                   href="https://mia.its.ac.id/"
                   target="_blank"
                   rel="noreferrer"
-                  className="p-3 rounded-2xl bg-slate-900 text-white text-xs font-extrabold hover:bg-slate-800 transition-all shadow-xs flex items-center justify-between group"
+                  className="p-3 rounded-2xl bg-white border border-white/80 text-slate-900 text-xs font-extrabold hover:bg-slate-50 transition-all shadow-2xs flex items-center justify-between group"
                 >
-                  <div className="flex items-center gap-2.5">
-                    <GraduationCap size={15} className="text-blue-300" />
+                  <div className="flex items-center gap-2">
+                    <GraduationCap size={15} className="text-blue-600" />
                     <span>Academics</span>
                   </div>
-                  <ExternalLink size={13} className="text-slate-400 group-hover:text-white transition-colors" />
+                  <ExternalLink size={12} className="text-slate-400 group-hover:text-blue-600 transition-colors" />
                 </a>
 
                 <a
                   href="https://kemahasiswaan.its.ac.id/portofolio/kegiatan"
                   target="_blank"
                   rel="noreferrer"
-                  className="p-3 rounded-2xl bg-slate-900 text-white text-xs font-extrabold hover:bg-slate-800 transition-all shadow-xs flex items-center justify-between group"
+                  className="p-3 rounded-2xl bg-white border border-white/80 text-slate-900 text-xs font-extrabold hover:bg-slate-50 transition-all shadow-2xs flex items-center justify-between group"
                 >
-                  <div className="flex items-center gap-2.5">
-                    <Users size={15} className="text-blue-300" />
+                  <div className="flex items-center gap-2">
+                    <Users size={15} className="text-blue-600" />
                     <span>StudConn</span>
                   </div>
-                  <ExternalLink size={13} className="text-slate-400 group-hover:text-white transition-colors" />
+                  <ExternalLink size={12} className="text-slate-400 group-hover:text-blue-600 transition-colors" />
                 </a>
 
                 <a
                   href="https://wali.its.ac.id"
                   target="_blank"
                   rel="noreferrer"
-                  className="p-3 rounded-2xl bg-slate-900 text-white text-xs font-extrabold hover:bg-slate-800 transition-all shadow-xs flex items-center justify-between group"
+                  className="p-3 rounded-2xl bg-white border border-white/80 text-slate-900 text-xs font-extrabold hover:bg-slate-50 transition-all shadow-2xs flex items-center justify-between group"
                 >
-                  <div className="flex items-center gap-2.5">
-                    <UserCheck size={15} className="text-blue-300" />
+                  <div className="flex items-center gap-2">
+                    <UserCheck size={15} className="text-blue-600" />
                     <span>Wali</span>
                   </div>
-                  <ExternalLink size={13} className="text-slate-400 group-hover:text-white transition-colors" />
+                  <ExternalLink size={12} className="text-slate-400 group-hover:text-blue-600 transition-colors" />
                 </a>
               </div>
             </div>
 
-            {/* KARTU PINK PASTEL (MEDSOS TERRAVANA 2026) */}
+            {/* KARTU PINK PASTEL (MEDSOS) */}
             <div className="bg-[#F5C7F7] rounded-[32px] p-4 text-slate-900 shadow-lg shadow-pink-100/50 flex items-center justify-between gap-3">
               <div>
                 <span className="text-xs font-black block">Follow us</span>
