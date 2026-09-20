@@ -22,8 +22,8 @@ export type AgendaType = 'task' | 'event';
 export interface ScheduledTask {
   id: string;
   type: AgendaType;
-  time: string;
-  endTime?: string;
+  time: string; // Misal "09:00"
+  endTime?: string; // Misal "10:30"
   title: string;
   description: string;
   category: string;
@@ -38,7 +38,7 @@ interface TasksViewProps {
   onNavigateTab?: (tabId: string) => void;
 }
 
-// Helper untuk format YYYY-MM-DD
+// Helper YYYY-MM-DD
 const toIsoString = (date: Date) => {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -54,6 +54,35 @@ const formatIndonesianDate = (date: Date) => {
     'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
   ];
   return `${days[date.getDay()]}, ${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+};
+
+// Helper Converter Jam -> Siklus Indonesia (PAGI, SIANG, SORE, MALAM)
+const getIndonesianPeriod = (timeStr: string): { time: string; period: string } => {
+  if (!timeStr) return { time: '00:00', period: 'PAGI' };
+  
+  // Clean string jika ada sisa AM/PM
+  const cleanTime = timeStr.replace(/(AM|PM)/i, '').trim();
+  const [hrs, mins] = cleanTime.split(':');
+  let hours = parseInt(hrs, 10);
+  if (isNaN(hours)) hours = 9;
+
+  // Cek siklus jika format awalnya AM/PM
+  if (timeStr.toUpperCase().includes('PM') && hours < 12) hours += 12;
+  if (timeStr.toUpperCase().includes('AM') && hours === 12) hours = 0;
+
+  let period = 'PAGI';
+  if (hours >= 11 && hours < 15) {
+    period = 'SIANG';
+  } else if (hours >= 15 && hours < 18) {
+    period = 'SORE';
+  } else if (hours >= 18 || hours < 5) {
+    period = 'MALAM';
+  }
+
+  const displayHours = hours % 12 || 12;
+  const formattedTime = `${String(displayHours).padStart(2, '0')}:${mins || '00'}`;
+
+  return { time: formattedTime, period };
 };
 
 // Helper Render Link Clickable
@@ -116,8 +145,8 @@ export const TasksView: React.FC<TasksViewProps> = ({ onNavigateTab }) => {
     {
       id: 'st-1',
       type: 'event',
-      time: '09:00 AM',
-      endTime: '10:30 AM',
+      time: '09:00',
+      endTime: '10:30',
       title: 'Meeting dengan Dosen Pembimbing',
       description: 'Diskusi progres PKM-RSH dan rekap data. Link Zoom: https://zoom.us/j/123456789',
       category: 'Work',
@@ -128,24 +157,24 @@ export const TasksView: React.FC<TasksViewProps> = ({ onNavigateTab }) => {
     {
       id: 'st-2',
       type: 'task',
-      time: '11:59 PM',
-      title: 'Pengerjaan Desain Landing Page',
-      description: 'Review UI komponen Soft Clay di Figma dan koordinasi dengan tim dev.',
-      category: 'Work',
-      dateIso: todayIso,
-      isCompleted: true,
-      priority: 'Medium',
-    },
-    {
-      id: 'st-3',
-      type: 'task',
-      time: '05:00 PM',
+      time: '17:00',
       title: 'Bayar Iuran Kas Angkatan',
       description: 'Transfer ke bendahara Terravana via QRIS / Bank Mandiri.',
       category: 'Personal',
       dateIso: todayIso,
       isCompleted: false,
       priority: 'Low',
+    },
+    {
+      id: 'st-3',
+      type: 'task',
+      time: '23:59',
+      title: 'Submit Proposal Terravana Compe',
+      description: 'Upload berkas final dalam format PDF ke portal kemahasiswaan.',
+      category: 'Organisasi',
+      dateIso: todayIso,
+      isCompleted: true,
+      priority: 'High',
     },
   ]);
 
@@ -190,22 +219,11 @@ export const TasksView: React.FC<TasksViewProps> = ({ onNavigateTab }) => {
     e.preventDefault();
     if (!newTitle.trim()) return;
 
-    const formatTime12 = (time24: string) => {
-      const [hrs, mins] = time24.split(':');
-      const hourNum = parseInt(hrs, 10);
-      const ampm = hourNum >= 12 ? 'PM' : 'AM';
-      const displayHour = hourNum % 12 || 12;
-      return `${String(displayHour).padStart(2, '0')}:${mins} ${ampm}`;
-    };
-
-    const formattedStartTime = formatTime12(newTime);
-    const formattedEndTime = newType === 'event' ? formatTime12(newEndTime) : undefined;
-
     const newTask: ScheduledTask = {
       id: `st-${Date.now()}`,
       type: newType,
-      time: formattedStartTime,
-      endTime: formattedEndTime,
+      time: newTime,
+      endTime: newType === 'event' ? newEndTime : undefined,
       title: newTitle,
       description: newDesc,
       category: newCategory,
@@ -230,11 +248,9 @@ export const TasksView: React.FC<TasksViewProps> = ({ onNavigateTab }) => {
     });
 
     const parseTimeToMinutes = (timeStr: string) => {
-      const [time, period] = timeStr.split(' ');
-      let [hours, minutes] = time.split(':').map(Number);
-      if (period === 'PM' && hours < 12) hours += 12;
-      if (period === 'AM' && hours === 12) hours = 0;
-      return hours * 60 + minutes;
+      const clean = timeStr.replace(/(AM|PM)/i, '').trim();
+      const [hours, minutes] = clean.split(':').map(Number);
+      return (hours || 0) * 60 + (minutes || 0);
     };
 
     return filtered.sort((a, b) => parseTimeToMinutes(a.time) - parseTimeToMinutes(b.time));
@@ -249,54 +265,36 @@ export const TasksView: React.FC<TasksViewProps> = ({ onNavigateTab }) => {
   const firstDayOfWeek = new Date(calendarViewYear, calendarViewMonth, 1).getDay();
 
   return (
-    <div id="tasks-schedule-root" className="max-w-md mx-auto space-y-5 pt-2 pb-36 font-sans">
-      {/* 1. BAR PALING ATAS */}
-      <div className="flex items-center justify-between gap-2">
-        {/* TOMBOL BACK KE DASHBOARD */}
+    <div id="tasks-schedule-root" className="max-w-md mx-auto space-y-4 pt-2 pb-36 font-sans">
+      {/* 1. TOP BAR CLEAN (TANPA TANGGAL REDUNDANT & TOMBOL + MELAYANG ATAS) */}
+      <div className="flex items-center justify-between">
         <button
           type="button"
           onClick={() => onNavigateTab && onNavigateTab('home')}
-          className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-700 shadow-2xs hover:bg-slate-50 transition-colors"
-          title="Kembali ke Dashboard"
+          className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-700 shadow-2xs hover:bg-slate-50 transition-colors shrink-0"
+          title="Kembali ke Dashboard Home"
         >
           <ArrowLeft size={18} />
         </button>
 
-        <div className="px-4 py-2 rounded-full bg-white border border-slate-200 shadow-2xs text-center">
-          <span className="text-xs font-black text-slate-900 tracking-tight">
-            Today: {formatIndonesianDate(today)}
-          </span>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => setIsAddModalOpen(true)}
-          className="w-10 h-10 rounded-full bg-[#7C5CFC] text-white flex items-center justify-center shadow-md shadow-purple-200/60 hover:scale-105 transition-all"
-          title="Tambah Agenda Baru"
-        >
-          <Plus size={20} />
-        </button>
-      </div>
-
-      {/* 2. TITLE & KALENDER BUTTON */}
-      <div className="flex items-end justify-between pt-1">
-        <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none">
-            Schedule
-          </h1>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none mt-1">
-            Tracker
-          </h1>
-        </div>
-
         <button
           type="button"
           onClick={() => setIsCalendarModalOpen(true)}
-          className="px-4 py-2.5 rounded-2xl bg-white border border-slate-200 shadow-xs flex items-center gap-2 text-xs font-black text-slate-800 hover:bg-slate-50 transition-colors"
+          className="px-3.5 py-2 rounded-2xl bg-white border border-slate-200 text-slate-800 text-xs font-black flex items-center gap-1.5 shadow-2xs hover:bg-slate-50 transition-colors"
         >
-          <CalendarIcon size={15} className="text-slate-700" />
+          <CalendarIcon size={14} className="text-slate-600" />
           <span>Kalender</span>
         </button>
+      </div>
+
+      {/* 2. TITLE SECTION */}
+      <div className="pt-1">
+        <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none">
+          Schedule
+        </h1>
+        <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none mt-1">
+          Tracker
+        </h1>
       </div>
 
       {/* 3. SCROLLABLE DATE STRIP */}
@@ -342,13 +340,13 @@ export const TasksView: React.FC<TasksViewProps> = ({ onNavigateTab }) => {
       </div>
 
       {/* 4. CATEGORY FILTERS */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none pt-1">
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
         <button
           type="button"
           onClick={() => setSelectedCategory('All')}
-          className={`px-4 py-2 rounded-full text-xs font-black transition-all shrink-0 ${
+          className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all shrink-0 ${
             selectedCategory === 'All'
-              ? 'bg-[#1E1B26] text-white shadow-md'
+              ? 'bg-[#1E1B26] text-white shadow-xs'
               : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
           }`}
         >
@@ -362,9 +360,9 @@ export const TasksView: React.FC<TasksViewProps> = ({ onNavigateTab }) => {
               key={cat}
               type="button"
               onClick={() => setSelectedCategory(cat)}
-              className={`px-4 py-2 rounded-full text-xs font-bold transition-all shrink-0 ${
+              className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
                 isActive
-                  ? 'bg-[#1E1B26] text-white shadow-md'
+                  ? 'bg-[#1E1B26] text-white shadow-xs'
                   : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
               }`}
             >
@@ -373,6 +371,18 @@ export const TasksView: React.FC<TasksViewProps> = ({ onNavigateTab }) => {
           );
         })}
       </div>
+
+      {/* 5. BUTTON (+ TAMBAH AGENDAMU) FULL-WIDTH REVISI */}
+      <button
+        type="button"
+        onClick={() => setIsAddModalOpen(true)}
+        className="w-full py-3 px-4 rounded-2xl bg-white border border-dashed border-purple-300 text-purple-700 hover:bg-purple-50/50 text-xs font-black transition-all shadow-2xs flex items-center justify-center gap-2 group"
+      >
+        <div className="w-5 h-5 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+          <Plus size={13} className="stroke-[3]" />
+        </div>
+        <span>+ Tambah Agendamu</span>
+      </button>
 
       {/* NOTIFIKASI MEMILIH TANGGAL LAIN */}
       {!isViewingToday && (
@@ -389,113 +399,148 @@ export const TasksView: React.FC<TasksViewProps> = ({ onNavigateTab }) => {
         </div>
       )}
 
-      {/* 5. TIMELINE LIST */}
-      <div className="pt-2 space-y-4">
+      {/* 6. TIMELINE LIST WITH FORMAT (PAGI / SIANG / SORE / MALAM) */}
+      <div className="space-y-4 pt-1">
         {tasksForSelectedDate.length > 0 ? (
-          tasksForSelectedDate.map((task) => (
-            <div key={task.id} className="flex items-start gap-3">
-              {/* Left Column: Time Slot */}
-              <div className="w-14 shrink-0 text-center pt-1">
-                <span className="text-xs font-black text-slate-900 block leading-tight">
-                  {task.time.split(' ')[0]}
-                </span>
-                <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">
-                  {task.time.split(' ')[1]}
-                </span>
-                <div className="w-0.5 h-10 bg-slate-200 mx-auto my-2 rounded-full opacity-60" />
-              </div>
+          tasksForSelectedDate.map((task) => {
+            const isEvent = task.type === 'event';
+            
+            const startInfo = getIndonesianPeriod(task.time);
+            const endInfo = getIndonesianPeriod(task.endTime || '10:30');
 
-              {/* Right Column: Card */}
-              <div
-                className={`flex-1 rounded-[28px] p-4 border transition-all space-y-2.5 shadow-xs relative ${
-                  task.isCompleted
-                    ? 'bg-slate-50/80 border-slate-200 opacity-60'
-                    : 'bg-white border-slate-100'
-                }`}
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5">
-                      {task.type === 'event' ? (
-                        <span className="px-2 py-0.5 rounded-full bg-blue-600 text-white text-[9px] font-black uppercase tracking-wider flex items-center gap-1">
-                          <CalendarDays size={10} />
-                          <span>EVENT</span>
+            return (
+              <div key={task.id} className="flex items-stretch gap-3">
+                {/* Left Column: Time Axis */}
+                <div className="w-16 shrink-0 flex flex-col items-end justify-between py-1 text-right">
+                  {isEvent ? (
+                    <>
+                      {/* JAM MULAI (ATAS GARIS) */}
+                      <div>
+                        <span className="text-xs font-black text-slate-900 block leading-none">
+                          {startInfo.time}
                         </span>
-                      ) : (
-                        <span
-                          className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
-                            task.priority === 'High'
-                              ? 'bg-rose-100 text-rose-700'
-                              : task.priority === 'Medium'
-                              ? 'bg-amber-100 text-amber-800'
-                              : 'bg-emerald-100 text-emerald-800'
-                          }`}
-                        >
-                          ● {task.category}
+                        <span className="text-[9px] font-extrabold text-slate-400 block mt-0.5">
+                          {startInfo.period}
                         </span>
-                      )}
+                      </div>
 
-                      {task.type === 'event' && (
-                        <span className="text-[9px] font-extrabold text-blue-900">
-                          {task.time} {task.endTime ? `- ${task.endTime}` : ''}
+                      {/* GARIS VERTIKAL PENHUBUNG */}
+                      <div className="w-0.5 flex-1 bg-slate-200 my-1 rounded-full self-end mr-2" />
+
+                      {/* JAM SELESAI (BAWAH GARIS) */}
+                      <div>
+                        <span className="text-xs font-black text-slate-900 block leading-none">
+                          {endInfo.time}
                         </span>
-                      )}
-                    </div>
-                  </div>
+                        <span className="text-[9px] font-extrabold text-slate-400 block mt-0.5">
+                          {endInfo.period}
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      {/* GARIS DI ATAS UNTUK DEADLINE TASK */}
+                      <div className="w-0.5 flex-1 bg-slate-200 mb-1 rounded-full self-end mr-2" />
 
-                  <h3
-                    className={`text-sm font-black text-slate-900 leading-snug ${
-                      task.type === 'task' && task.isCompleted ? 'line-through text-slate-400' : ''
-                    }`}
-                  >
-                    {task.title}
-                  </h3>
-
-                  {task.description && (
-                    <p className="text-xs text-slate-600 font-medium line-clamp-2 leading-relaxed">
-                      {renderTextWithLinks(task.description)}
-                    </p>
+                      {/* JAM DEADLINE (DI BAWAH GARIS VERTIKAL) */}
+                      <div>
+                        <span className="text-xs font-black text-rose-600 block leading-none">
+                          {startInfo.time}
+                        </span>
+                        <span className="text-[9px] font-extrabold text-rose-400 block mt-0.5">
+                          {startInfo.period}
+                        </span>
+                      </div>
+                    </>
                   )}
                 </div>
 
-                {/* Bottom Row Card */}
-                <div className="pt-2 border-t border-slate-100/80 flex items-center justify-between">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedDetailTask(task)}
-                    className="text-[11px] font-black text-purple-600 hover:text-purple-800 transition-colors flex items-center gap-0.5"
-                  >
-                    <span>Details</span>
-                    <ChevronRight size={14} />
-                  </button>
+                {/* Right Column: Card Agenda */}
+                <div
+                  className={`flex-1 rounded-[26px] p-4 border transition-all space-y-2.5 shadow-xs relative ${
+                    task.isCompleted
+                      ? 'bg-slate-50/80 border-slate-200 opacity-60'
+                      : 'bg-white border-slate-100'
+                  }`}
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5">
+                        {isEvent ? (
+                          <span className="px-2 py-0.5 rounded-full bg-blue-600 text-white text-[9px] font-black uppercase tracking-wider flex items-center gap-1">
+                            <CalendarDays size={10} />
+                            <span>EVENT</span>
+                          </span>
+                        ) : (
+                          <span
+                            className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
+                              task.priority === 'High'
+                                ? 'bg-rose-100 text-rose-700'
+                                : task.priority === 'Medium'
+                                ? 'bg-amber-100 text-amber-800'
+                                : 'bg-emerald-100 text-emerald-800'
+                            }`}
+                          >
+                            ● {task.category}
+                          </span>
+                        )}
+                      </div>
+                    </div>
 
-                  {task.type === 'task' && (
-                    <button
-                      type="button"
-                      onClick={() => handleToggleComplete(task.id)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 ${
-                        task.isCompleted
-                          ? 'bg-emerald-500 text-white shadow-xs'
-                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    <h3
+                      className={`text-sm font-black text-slate-900 leading-snug ${
+                        !isEvent && task.isCompleted ? 'line-through text-slate-400' : ''
                       }`}
                     >
-                      {task.isCompleted ? (
-                        <>
-                          <CheckCircle2 size={14} />
-                          <span>Checked ✓</span>
-                        </>
-                      ) : (
-                        <>
-                          <Circle size={14} />
-                          <span>Tandai Selesai</span>
-                        </>
-                      )}
+                      {task.title}
+                    </h3>
+
+                    {task.description && (
+                      <p className="text-xs text-slate-600 font-medium line-clamp-2 leading-relaxed">
+                        {renderTextWithLinks(task.description)}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Bottom Row Card */}
+                  <div className="pt-2 border-t border-slate-100/80 flex items-center justify-between">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedDetailTask(task)}
+                      className="text-[11px] font-black text-purple-600 hover:text-purple-800 transition-colors flex items-center gap-0.5"
+                    >
+                      <span>Details</span>
+                      <ChevronRight size={14} />
                     </button>
-                  )}
+
+                    {!isEvent && (
+                      <button
+                        type="button"
+                        onClick={() => handleToggleComplete(task.id)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 ${
+                          task.isCompleted
+                            ? 'bg-emerald-500 text-white shadow-xs'
+                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                        }`}
+                      >
+                        {task.isCompleted ? (
+                          <>
+                            <CheckCircle2 size={14} />
+                            <span>Checked ✓</span>
+                          </>
+                        ) : (
+                          <>
+                            <Circle size={14} />
+                            <span>Tandai Selesai</span>
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))
+            );
+          })
         ) : (
           <div className="text-center py-12 bg-white rounded-[32px] border border-dashed border-slate-200 p-6 space-y-2">
             <Clock size={32} className="mx-auto text-slate-300" />
