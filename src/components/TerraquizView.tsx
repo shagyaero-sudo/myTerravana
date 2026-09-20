@@ -32,16 +32,6 @@ interface QuizQuestion {
   options: string[];
 }
 
-// Helper Format Tanggal Indonesia
-const formatIndonesianDate = (date: Date) => {
-  const days = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
-  const months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-    'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
-  ];
-  return `${days[date.getDay()]}, ${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
-};
-
 export const TerraquizView: React.FC<TerraquizViewProps> = ({
   students,
   onUpdateMastered,
@@ -50,7 +40,6 @@ export const TerraquizView: React.FC<TerraquizViewProps> = ({
   totalStudents,
   onNavigateTab,
 }) => {
-  const today = new Date();
   const [reviewQueue, setReviewQueue] = useState<string[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState<QuizQuestion | null>(null);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
@@ -71,25 +60,21 @@ export const TerraquizView: React.FC<TerraquizViewProps> = ({
 
     let targetStudent: StudentUser | undefined;
 
-    // Cek antrean pengulangan (Spaced Repetition / Smart Queue)
     if (reviewQueue.length > 0 && questionCount % 3 === 0) {
       const reviewId = reviewQueue[0];
       targetStudent = students.find((s) => s.id === reviewId);
     }
 
-    // Jika tidak dari review queue, prioritaskan yang belum dihafal
     if (!targetStudent) {
       const unmastered = students.filter((s) => !s.mastered);
       const pool = unmastered.length > 0 ? unmastered : students;
       targetStudent = pool[Math.floor(Math.random() * pool.length)];
     }
 
-    // Acak 3 pilihan salah
     const others = students.filter((s) => s.id !== targetStudent!.id);
     const shuffledOthers = [...others].sort(() => 0.5 - Math.random());
     const wrongOptions = shuffledOthers.slice(0, 3).map((s) => s.name);
 
-    // Lock opsi jawaban
     const lockedOptions = [targetStudent.name, ...wrongOptions].sort(() => 0.5 - Math.random());
 
     setCurrentQuestion({
@@ -121,17 +106,12 @@ export const TerraquizView: React.FC<TerraquizViewProps> = ({
       if (newStreak > bestStreak) setBestStreak(newStreak);
       setSessionCorrect((prev) => prev + 1);
       setSessionTotal((prev) => prev + 1);
-
-      // Hapus dari antrean review jika benar
       setReviewQueue((prev) => prev.filter((id) => id !== currentQuestion.student.id));
-
-      // Update KPI
       onUpdateMastered(currentQuestion.student.id, true);
     } else {
       setStreak(0);
       setSessionTotal((prev) => prev + 1);
 
-      // Masukkan ke antrean review jika salah
       if (!reviewQueue.includes(currentQuestion.student.id)) {
         setReviewQueue((prev) => [...prev, currentQuestion.student.id]);
       }
@@ -161,9 +141,9 @@ export const TerraquizView: React.FC<TerraquizViewProps> = ({
   const { student: currentStudent, options: currentOptions } = currentQuestion;
 
   return (
-    <div id="terraquiz-view-root" className="max-w-md mx-auto space-y-5 pt-2 pb-36 font-sans">
-      {/* 1. TOP BAR MODEL TASKSVIEW */}
-      <div className="flex items-center justify-between gap-2">
+    <div id="terraquiz-view-root" className="max-w-md mx-auto space-y-4 pt-2 pb-36 font-sans">
+      {/* 1. TOP BAR CLEAN (TANPA TANGGAL) */}
+      <div className="flex items-center justify-between">
         <button
           type="button"
           onClick={() => onNavigateTab && onNavigateTab('home')}
@@ -172,12 +152,6 @@ export const TerraquizView: React.FC<TerraquizViewProps> = ({
         >
           <ArrowLeft size={18} />
         </button>
-
-        <div className="px-4 py-2 rounded-full bg-white border border-slate-200 shadow-2xs text-center">
-          <span className="text-xs font-black text-slate-900 tracking-tight">
-            Today: {formatIndonesianDate(today)}
-          </span>
-        </div>
 
         <button
           type="button"
@@ -197,9 +171,6 @@ export const TerraquizView: React.FC<TerraquizViewProps> = ({
         <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none mt-1">
           Challenge
         </h1>
-        <p className="text-xs text-slate-400 font-bold mt-2">
-          Tebak 170 rekan angkatan Terravana 2026.
-        </p>
       </div>
 
       {/* 3. UNIFIED PROGRESS BAR */}
@@ -231,7 +202,6 @@ export const TerraquizView: React.FC<TerraquizViewProps> = ({
         id="terraquiz-card"
         className="bg-white rounded-[32px] border border-slate-100 p-5 shadow-xs flex flex-col items-center"
       >
-        {/* Photo Card */}
         <div className="relative mb-4 w-full flex flex-col items-center">
           <div className="relative w-44 h-44 sm:w-48 sm:h-48 rounded-[28px] overflow-hidden ring-4 ring-slate-100 shadow-xs bg-slate-100">
             <img
@@ -249,7 +219,6 @@ export const TerraquizView: React.FC<TerraquizViewProps> = ({
             )}
           </div>
 
-          {/* Hint Overlay */}
           <div className="mt-3">
             {!showHint ? (
               <button
@@ -258,7 +227,7 @@ export const TerraquizView: React.FC<TerraquizViewProps> = ({
                 className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-400 hover:text-slate-700 transition-colors"
               >
                 <HelpCircle size={12} />
-                <span>Buka Petunjuk Kelompok & Domisili</span>
+                <span>Petunjuk</span>
               </button>
             ) : (
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-50 border border-slate-200 text-xs font-bold text-slate-600">
@@ -270,7 +239,6 @@ export const TerraquizView: React.FC<TerraquizViewProps> = ({
           </div>
         </div>
 
-        {/* Question Prompt */}
         <div className="text-center mb-4">
           <h3 className="text-sm font-black text-slate-900">
             Siapakah nama rekan di foto ini?
@@ -280,7 +248,6 @@ export const TerraquizView: React.FC<TerraquizViewProps> = ({
           </p>
         </div>
 
-        {/* 4 Multiple Choice Options */}
         <div className="w-full grid grid-cols-1 gap-2">
           {currentOptions.map((option, index) => {
             const letter = String.fromCharCode(65 + index);
@@ -336,7 +303,6 @@ export const TerraquizView: React.FC<TerraquizViewProps> = ({
           })}
         </div>
 
-        {/* FEEDBACK & NEXT ACTION */}
         <AnimatePresence>
           {isAnswered && (
             <motion.div
@@ -381,7 +347,6 @@ export const TerraquizView: React.FC<TerraquizViewProps> = ({
         </AnimatePresence>
       </div>
 
-      {/* RESET SESI */}
       <div className="flex justify-end text-xs text-slate-400 px-1 font-medium">
         <button
           type="button"
@@ -393,7 +358,7 @@ export const TerraquizView: React.FC<TerraquizViewProps> = ({
         </button>
       </div>
 
-      {/* MODAL CARA BERMAIN & SISTEMATIKA */}
+      {/* MODAL HOW TO PLAY */}
       <AnimatePresence>
         {isHowToPlayOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">

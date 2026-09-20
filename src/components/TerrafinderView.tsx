@@ -32,32 +32,19 @@ const REGION_FILTERS: RegionType[] = [
   'Luar Jawa',
 ];
 
-// Helper Format Tanggal Indonesia
-const formatIndonesianDate = (date: Date) => {
-  const days = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
-  const months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-    'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
-  ];
-  return `${days[date.getDay()]}, ${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
-};
-
 export const TerrafinderView: React.FC<TerrafinderViewProps> = ({
   students,
   onSelectStudent,
   onNavigateTab,
 }) => {
-  const today = new Date();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRegion, setSelectedRegion] = useState<RegionType>('All');
   const [selectedKelompok, setSelectedKelompok] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
-  // Custom Dropdown State
   const [isKelompokDropdownOpen, setIsKelompokDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdown on click outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -68,7 +55,6 @@ export const TerrafinderView: React.FC<TerrafinderViewProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Filter mahasiswa berdasarkan pencarian, wilayah, dan kelompok
   const filteredStudents = useMemo(() => {
     return students.filter((student) => {
       if (selectedRegion !== 'All' && student.region !== selectedRegion) {
@@ -97,8 +83,8 @@ export const TerrafinderView: React.FC<TerrafinderViewProps> = ({
 
   return (
     <div id="terrafinder-view-root" className="max-w-md mx-auto space-y-4 pt-2 pb-36 font-sans">
-      {/* 1. TOP BAR MODEL TASKSVIEW */}
-      <div className="flex items-center justify-between gap-2">
+      {/* 1. TOP BAR CLEAN (TANPA TANGGAL) */}
+      <div className="flex items-center justify-between">
         <button
           type="button"
           onClick={() => onNavigateTab && onNavigateTab('home')}
@@ -108,13 +94,6 @@ export const TerrafinderView: React.FC<TerrafinderViewProps> = ({
           <ArrowLeft size={18} />
         </button>
 
-        <div className="px-4 py-2 rounded-full bg-white border border-slate-200 shadow-2xs text-center">
-          <span className="text-xs font-black text-slate-900 tracking-tight">
-            Today: {formatIndonesianDate(today)}
-          </span>
-        </div>
-
-        {/* View mode toggle (Grid vs List) */}
         <div className="flex items-center gap-1 bg-white p-1 rounded-full border border-slate-200 shadow-2xs">
           <button
             type="button"
@@ -151,15 +130,11 @@ export const TerrafinderView: React.FC<TerrafinderViewProps> = ({
         <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none mt-1">
           Directory
         </h1>
-        <p className="text-xs text-slate-400 font-bold mt-2">
-          Direktori & kontak mahasiswa Terravana 2026.
-        </p>
       </div>
 
-      {/* 3. SEARCH BAR & CUSTOM DROPDOWN MYTERRAVANA */}
+      {/* 3. SEARCH BAR & CUSTOM DROPDOWN */}
       <div className="bg-white rounded-[28px] border border-slate-100 p-3.5 shadow-xs space-y-2.5">
         <div className="flex flex-col gap-2">
-          {/* Search Input */}
           <div className="relative flex-1">
             <Search
               size={15}
@@ -184,7 +159,6 @@ export const TerrafinderView: React.FC<TerrafinderViewProps> = ({
             )}
           </div>
 
-          {/* CUSTOM DROPDOWN KELOMPOK MYTERRAVANA */}
           <div className="relative" ref={dropdownRef}>
             <button
               type="button"
@@ -241,7 +215,6 @@ export const TerrafinderView: React.FC<TerrafinderViewProps> = ({
           </div>
         </div>
 
-        {/* Region Filter Chips */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none pt-2 border-t border-slate-100/80">
           <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider shrink-0 mr-0.5 flex items-center gap-1">
             <MapPin size={11} />
@@ -267,7 +240,7 @@ export const TerrafinderView: React.FC<TerrafinderViewProps> = ({
         </div>
       </div>
 
-      {/* 4. RESULT COUNT & CLEAR SEARCH */}
+      {/* 4. RESULT COUNT */}
       <div className="flex items-center justify-between text-xs text-slate-400 font-extrabold px-1">
         <span>
           Menampilkan <strong className="text-slate-900">{filteredStudents.length}</strong> mahasiswa
@@ -283,7 +256,7 @@ export const TerrafinderView: React.FC<TerrafinderViewProps> = ({
         )}
       </div>
 
-      {/* 5. STUDENT CARDS CONTAINER */}
+      {/* 5. STUDENT CARDS */}
       {filteredStudents.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-[32px] border border-dashed border-slate-200 p-6 space-y-2">
           <Users size={32} className="mx-auto text-slate-300" />
@@ -293,11 +266,7 @@ export const TerrafinderView: React.FC<TerrafinderViewProps> = ({
           </p>
         </div>
       ) : viewMode === 'grid' ? (
-        /* GRID VIEW (CHAT WA & MAPS SAMA UKURAN, DETAIL KECIL) */
-        <div
-          id="student-cards-grid"
-          className="space-y-3"
-        >
+        <div id="student-cards-grid" className="space-y-3">
           {filteredStudents.map((student) => {
             const waUrl = `https://wa.me/${student.wa_number}?text=${encodeURIComponent(
               `Halo ${student.nickname}! Aku dari angkatan Terravana 2026 mau koordinasi yaa 🙌`
@@ -313,7 +282,6 @@ export const TerrafinderView: React.FC<TerrafinderViewProps> = ({
                 className="bg-white rounded-[26px] border border-slate-100/90 p-4 shadow-xs space-y-3 relative"
               >
                 <div>
-                  {/* Avatar & Info Utama */}
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
                       <div className="relative shrink-0">
@@ -341,7 +309,7 @@ export const TerrafinderView: React.FC<TerrafinderViewProps> = ({
                           {student.name}
                         </h4>
                         <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400">
-                          <span className="text-purple-600">"{student.nickname}"</span>
+                          <span className="text-purple-600">{student.nickname}</span>
                           <span>•</span>
                           <span>NRP {student.nrp ? student.nrp.slice(-4) : '1001'}</span>
                         </div>
@@ -349,11 +317,10 @@ export const TerrafinderView: React.FC<TerrafinderViewProps> = ({
                     </div>
 
                     <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-slate-900 text-white shrink-0">
-                      K-{student.kelompok}
+                      Kel {student.kelompok}
                     </span>
                   </div>
 
-                  {/* Alamat & Domisili (SATU BARIS RAPI) */}
                   <div className="mt-2.5 bg-slate-50 rounded-xl p-2.5 border border-slate-100/80 flex items-center justify-between gap-2 text-[10px] font-bold text-slate-600">
                     <div className="flex items-center gap-1.5 truncate">
                       <MapPin size={12} className="text-slate-400 shrink-0" />
@@ -365,9 +332,7 @@ export const TerrafinderView: React.FC<TerrafinderViewProps> = ({
                   </div>
                 </div>
 
-                {/* Direct Action Buttons (WA & MAPS FLEX-1 SAMAAAN, DETAIL KECIL) */}
                 <div className="pt-0.5 flex items-center gap-2">
-                  {/* CHAT WA (FLEX-1) */}
                   <a
                     id={`btn-wa-${student.id}`}
                     href={waUrl}
@@ -379,7 +344,6 @@ export const TerrafinderView: React.FC<TerrafinderViewProps> = ({
                     <span>Chat WA</span>
                   </a>
 
-                  {/* MAPS (FLEX-1 - UKURAN SAMA DENGAN WA) */}
                   <a
                     href={mapsUrl}
                     target="_blank"
@@ -388,16 +352,15 @@ export const TerrafinderView: React.FC<TerrafinderViewProps> = ({
                     title="Buka Lokasi di Google Maps"
                   >
                     <Compass size={13} />
-                    <span>Maps</span>
+                    <span>Buka Maps</span>
                   </a>
 
-                  {/* DETAIL (RINGKAS/KECIL DI POJOK) */}
                   <button
                     type="button"
                     onClick={() => onSelectStudent(student)}
                     className="px-2.5 py-2 rounded-xl text-[10px] font-black text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors shrink-0"
                   >
-                    Detail &gt;
+                    Detail
                   </button>
                 </div>
               </div>
@@ -405,7 +368,6 @@ export const TerrafinderView: React.FC<TerrafinderViewProps> = ({
           })}
         </div>
       ) : (
-        /* LIST VIEW */
         <div
           id="student-cards-list"
           className="bg-white rounded-[28px] border border-slate-100 divide-y divide-slate-100 shadow-xs overflow-hidden"
