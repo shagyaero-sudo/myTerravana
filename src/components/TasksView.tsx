@@ -281,10 +281,10 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
       <div className="flex items-end justify-between pt-1">
         <div>
           <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none">
-            Task & Event
+            Schedule
           </h1>
           <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none mt-1">
-            Schedule
+            Tracker
           </h1>
         </div>
 

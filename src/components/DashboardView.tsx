@@ -12,6 +12,7 @@ import {
   GraduationCap,
   Users,
   UserCheck,
+  Pencil,
 } from 'lucide-react';
 import { StudentUser } from '../types';
 
@@ -55,7 +56,7 @@ interface DashboardViewProps {
   onEditAgenda?: (agenda: AgendaData) => void;
 }
 
-// Helper Format Tanggal Real-Time Dinamis (cth: Minggu, 20 Sep 2026)
+// Helper Format Tanggal Real-Time Dinamis (cth: Min, 20 Sep 2026)
 const getFormattedTodayDate = () => {
   const today = new Date();
   const days = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
@@ -142,16 +143,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   const currentDayClasses = masterSchedules.filter((item) => item.day === selectedDay);
 
-  // Custom Icon TikTok
+  // Custom Icon TikTok (Ter-render Presisi)
   const TikTokIcon = () => (
-    <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-      <path d="M12.525 2.015a.056.056 0 0 0-.01 0 10.201 10.201 0 0 1-5.188 1.483.052.052 0 0 0-.052.052v3.136a.052.052 0 0 0 .052.052c1.782 0 3.437-.582 4.786-1.567v8.988a6.34 6.34 0 1 1-6.34-6.34c.48 0 .945.053 1.393.155a.052.052 0 0 0 .062-.051V4.686a.052.052 0 0 0-.041-.051A9.52 9.52 0 0 0 6.098 4.5a9.535 9.535 0 1 0 9.535 9.535V8.12a8.88 8.88 0 0 0 4.314 1.115.052.052 0 0 0 .052-.052V6.047a.052.052 0 0 0-.052-.052 5.673 5.673 0 0 1-4.148-1.78 5.632 5.632 0 0 1-1.222-2.148.056.056 0 0 0-.052-.052h-2.002z"/>
+    <svg className="w-4 h-4 fill-current text-slate-900" viewBox="0 0 24 24">
+      <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 1 1-2.89-2.89c.28 0 .54.04.79.1V9.4a6.32 6.32 0 1 0 5.55 6.27V8.69a8.18 8.18 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.00-0.12z" />
     </svg>
   );
 
   return (
     <div id="dashboard-view-root" className="max-w-2xl mx-auto space-y-5 pt-2 pb-36 font-sans">
-      {/* 1. TOP BAR: PROFILE AVATAR & REAL-TIME DATE GREETING */}
+      {/* 1. TOP BAR: PROFILE AVATAR (DENGAN IKON PENSIL) & REAL-TIME DATE */}
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-3">
           <button
@@ -163,9 +164,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <img
               src={currentUser.avatar}
               alt={currentUser.name}
-              className="w-11 h-11 rounded-full object-cover ring-2 ring-purple-200 group-hover:ring-purple-400 transition-all shadow-xs"
+              className="w-11 h-11 rounded-full object-cover ring-2 ring-rose-200 group-hover:ring-rose-400 transition-all shadow-xs"
             />
-            <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full ring-2 ring-white" />
+            {/* IKON PENSIL MURNI TANPA PADDING / OUTLINE LINGKARAN */}
+            <Pencil
+              size={12}
+              className="absolute -bottom-0.5 -right-0.5 text-slate-700 drop-shadow-xs"
+            />
           </button>
 
           <div>
@@ -174,12 +179,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
             <h1
               onClick={onToggleOfficerMode}
-              className="text-lg font-black tracking-tight text-slate-900 cursor-pointer hover:text-indigo-600 transition-colors flex items-center gap-1.5 mt-0.5"
+              className="text-lg font-black tracking-tight text-slate-900 cursor-pointer hover:text-rose-600 transition-colors flex items-center gap-1.5 mt-0.5"
               title={currentUser.is_officer ? 'Mode BPH Aktif (Klik untuk matikan)' : 'Klik untuk masuk mode BPH'}
             >
               <span>Halo, {currentUser.nickname}! 👋</span>
               {currentUser.is_officer && (
-                <ShieldCheck size={16} className="text-indigo-600 inline-block" />
+                <ShieldCheck size={16} className="text-rose-600 inline-block" />
               )}
             </h1>
           </div>
@@ -192,11 +197,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         )}
       </div>
 
-      {/* 2. PROGRESS CHALLENGE TERRAQUIZ */}
+      {/* 2. PROGRESS CHALLENGE TERRAQUIZ (KARTU MERAH TERRAVANA) */}
       <div
         onClick={() => onNavigateTab('terraquiz')}
-        className="relative bg-[#A088F2] rounded-[32px] p-5 text-white shadow-xl shadow-purple-200/50 overflow-hidden cursor-pointer group transition-all hover:scale-[1.005]"
+        className="relative bg-gradient-to-r from-[#D32F2F] via-[#C2185B] to-[#7B1FA2] rounded-[32px] p-5 text-white shadow-xl shadow-rose-200/50 overflow-hidden cursor-pointer group transition-all hover:scale-[1.005]"
       >
+        {/* Soft Clay Red Gem SVG */}
         <motion.div
           animate={{
             y: [0, -8, 0],
@@ -207,19 +213,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         >
           <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
             <defs>
-              <radialGradient id="claySphere1" cx="35%" cy="35%" r="65%">
-                <stop offset="0%" stopColor="#FFF2A1" />
-                <stop offset="40%" stopColor="#F5A0D9" />
-                <stop offset="100%" stopColor="#8054D6" />
+              <radialGradient id="clayRed" cx="35%" cy="35%" r="65%">
+                <stop offset="0%" stopColor="#FF8A80" />
+                <stop offset="50%" stopColor="#FF1744" />
+                <stop offset="100%" stopColor="#880E4F" />
               </radialGradient>
             </defs>
-            <circle cx="100" cy="100" r="80" fill="url(#claySphere1)" />
+            <circle cx="100" cy="100" r="80" fill="url(#clayRed)" />
           </svg>
         </motion.div>
 
         <div className="relative z-10 flex items-center justify-between gap-3">
           <div className="space-y-2.5 max-w-[70%] sm:max-w-[75%]">
-            <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/20 text-[9px] font-extrabold uppercase tracking-wider text-purple-100 backdrop-blur-md">
+            <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/20 text-[9px] font-extrabold uppercase tracking-wider text-rose-100 backdrop-blur-md">
               <Sparkles size={10} />
               <span>TERRAQUIZ CHALLENGE</span>
             </div>
@@ -228,7 +234,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <h3 className="text-xl sm:text-2xl font-black tracking-tight leading-tight">
                 Hafalan Terravana
               </h3>
-              <p className="text-[11px] font-semibold text-purple-100/90 mt-0.5">
+              <p className="text-[11px] font-semibold text-rose-100/90 mt-0.5">
                 {masteredCount} dari {totalStudents} Mahasiswa Telah Dikuasai
               </p>
             </div>
@@ -245,7 +251,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                           e.stopPropagation();
                           onSelectStudent(st);
                         }}
-                        className="inline-block h-7 w-7 rounded-full ring-2 ring-[#A088F2] object-cover hover:scale-110 transition-transform"
+                        className="inline-block h-7 w-7 rounded-full ring-2 ring-[#D32F2F] object-cover hover:scale-110 transition-transform"
                       />
                     ))
                   : students.slice(0, 4).map((st) => (
@@ -257,7 +263,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                           e.stopPropagation();
                           onSelectStudent(st);
                         }}
-                        className="inline-block h-7 w-7 rounded-full ring-2 ring-[#A088F2] object-cover hover:scale-110 transition-transform"
+                        className="inline-block h-7 w-7 rounded-full ring-2 ring-[#D32F2F] object-cover hover:scale-110 transition-transform"
                       />
                     ))}
                 <div
@@ -265,7 +271,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     e.stopPropagation();
                     onNavigateTab('terrafinder');
                   }}
-                  className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-[9px] font-black text-white ring-2 ring-[#A088F2] hover:bg-slate-800"
+                  className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-[9px] font-black text-white ring-2 ring-[#D32F2F] hover:bg-slate-800"
                 >
                   +{totalStudents - 4}
                 </div>
@@ -288,7 +294,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <div className="shrink-0 flex items-center justify-center">
             <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white/15 border border-white/30 flex flex-col items-center justify-center backdrop-blur-md shadow-inner">
               <span className="text-base sm:text-lg font-black leading-none">{kpiPercentage}%</span>
-              <span className="text-[8px] font-extrabold uppercase tracking-widest text-purple-200 mt-0.5">
+              <span className="text-[8px] font-extrabold uppercase tracking-widest text-rose-200 mt-0.5">
                 KPI
               </span>
             </div>
@@ -412,7 +418,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
           {/* KANAN: SHORTCUT MYITS PORTAL & MEDSOS */}
           <div className="space-y-4 flex flex-col justify-between">
-            {/* PORTAL MYITS SHORTCUTS (REVISI 2 KOLOM CERAH) */}
+            {/* PORTAL MYITS SHORTCUTS */}
             <div className="relative bg-[#D0E5FF] rounded-[32px] p-5 text-slate-900 shadow-lg shadow-blue-100/50 flex-1 flex flex-col justify-between space-y-4 overflow-hidden">
               <motion.div
                 animate={{ y: [0, -8, 0] }}
@@ -436,7 +442,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <p className="text-xs font-bold text-blue-950/70">Akses shortcut</p>
               </div>
 
-              {/* 4 MENU SHORTCUT CERAH 2-KOLOM (HEMAT VERTICAL SPACE) */}
               <div className="relative z-10 grid grid-cols-2 gap-2 pt-1">
                 <a
                   href="https://classroom.its.ac.id/auth/oidc"
@@ -492,7 +497,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </div>
             </div>
 
-            {/* KARTU PINK PASTEL (MEDSOS) */}
+            {/* KARTU PINK PASTEL (MEDSOS FIX IKON TIKTOK) */}
             <div className="bg-[#F5C7F7] rounded-[32px] p-4 text-slate-900 shadow-lg shadow-pink-100/50 flex items-center justify-between gap-3">
               <div>
                 <span className="text-xs font-black block">Follow us</span>

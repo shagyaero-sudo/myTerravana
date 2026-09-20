@@ -128,7 +128,7 @@ export const TerrafinderView: React.FC<TerrafinderViewProps> = ({
           Terrafinder
         </h1>
         <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none mt-1">
-          Direktori 
+          Directory
         </h1>
       </div>
 
