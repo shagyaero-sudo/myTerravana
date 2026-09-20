@@ -772,7 +772,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
                   }`}
                 >
                   <CheckSquare size={14} />
-                  <span>📝 Tugas / Deadline</span>
+                  <span> Tugas </span>
                 </button>
 
                 <button
@@ -785,7 +785,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
                   }`}
                 >
                   <CalendarDays size={14} />
-                  <span>📅 Event / Acara</span>
+                  <span> Event</span>
                 </button>
               </div>
 
@@ -810,11 +810,11 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
 
                 <div className="space-y-1">
                   <label className="text-xs font-black text-slate-800 block">
-                    Deskripsi & Link (Zoom/GMeet/Drive)
+                    Deskripsi dan Link Penting
                   </label>
                   <textarea
                     rows={3}
-                    placeholder="Tulis deskripsi atau sertakan link Zoom https://..."
+                    placeholder="Tulis deskripsi atau sertakan link penting https://..."
                     value={newDesc}
                     onChange={(e) => setNewDesc(e.target.value)}
                     className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-medium text-slate-900 focus:outline-none"
@@ -903,14 +903,14 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-black text-slate-800 block">
-                      Project / Kategori
+                      Kategori
                     </label>
                     <button
                       type="button"
                       onClick={() => setIsAddingCustomCategory(true)}
                       className="text-[10px] font-black text-purple-600 hover:underline"
                     >
-                      + Tambah Custom Kategori
+                      + Tambah Kategori
                     </button>
                   </div>
                   <select

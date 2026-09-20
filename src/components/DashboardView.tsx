@@ -256,8 +256,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <div className="shrink-0 flex items-center justify-center">
             <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white/15 border border-white/30 flex flex-col items-center justify-center backdrop-blur-md shadow-inner">
               <span className="text-base sm:text-lg font-black leading-none">{kpiPercentage}%</span>
-              <span className="text-[8px] font-extrabold uppercase tracking-widest text-red-200 mt-0.5">
-                KPI
               </span>
             </div>
           </div>
