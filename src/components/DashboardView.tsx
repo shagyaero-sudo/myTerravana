@@ -69,7 +69,6 @@ const getFormattedTodayDate = () => {
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
   currentUser,
-  students,
   masteredCount,
   totalStudents,
   onNavigateTab,
@@ -151,7 +150,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   return (
     <div id="dashboard-view-root" className="max-w-2xl mx-auto space-y-5 pt-2 pb-36 font-sans">
-      {/* 1. TOP BAR: PROFILE AVATAR (TANPA CORNER OUTLINE + IKON PENSIL BULATAN SANTAI) & REAL-TIME DATE */}
+      {/* 1. TOP BAR: PROFILE AVATAR & REAL-TIME DATE */}
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-3">
           <button
@@ -165,7 +164,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               alt={currentUser.name}
               className="w-11 h-11 rounded-full object-cover shadow-2xs group-hover:opacity-90 transition-opacity"
             />
-            {/* BULATAN KECIL IKON PENSIL DENGAN PADDING/CONTAINER RAPI */}
+            {/* BULATAN KECIL IKON PENSIL */}
             <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-white border border-slate-100 shadow-xs flex items-center justify-center text-slate-700 group-hover:scale-110 transition-transform">
               <Pencil size={10} className="stroke-[2.5]" />
             </div>
@@ -195,12 +194,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         )}
       </div>
 
-      {/* 2. PROGRESS CHALLENGE TERRAQUIZ (MERAH TERRAVANA #DB0000 -> #860400 & TANPA AVATAR STACK) */}
+      {/* 2. PROGRESS CHALLENGE TERRAQUIZ (MERAH TERRAVANA #DB0000 -> #860400) */}
       <div
         onClick={() => onNavigateTab('terraquiz')}
         className="relative bg-gradient-to-r from-[#DB0000] to-[#860400] rounded-[32px] p-5 text-white shadow-xl shadow-red-900/20 overflow-hidden cursor-pointer group transition-all hover:scale-[1.005]"
       >
-        {/* Soft Clay Clay Sphere SVG Accent */}
         <motion.div
           animate={{
             y: [0, -8, 0],
@@ -237,7 +235,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </p>
             </div>
 
-            {/* ACTION BUTTON CLEAN (TANPA TUMPUSAN AVATAR +166) */}
             <div className="pt-0.5">
               <button
                 type="button"
@@ -256,6 +253,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <div className="shrink-0 flex items-center justify-center">
             <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white/15 border border-white/30 flex flex-col items-center justify-center backdrop-blur-md shadow-inner">
               <span className="text-base sm:text-lg font-black leading-none">{kpiPercentage}%</span>
+              <span className="text-[8px] font-extrabold uppercase tracking-widest text-red-200 mt-0.5">
+                KPI
               </span>
             </div>
           </div>
