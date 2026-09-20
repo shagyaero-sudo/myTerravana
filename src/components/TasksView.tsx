@@ -22,8 +22,8 @@ export type AgendaType = 'task' | 'event';
 export interface ScheduledTask {
   id: string;
   type: AgendaType;
-  time: string; // Misal "09:00"
-  endTime?: string; // Misal "10:30"
+  time: string; // Misal "09:00" (24 Jam)
+  endTime?: string; // Misal "10:30" (24 Jam)
   title: string;
   description: string;
   category: string;
@@ -56,17 +56,16 @@ const formatIndonesianDate = (date: Date) => {
   return `${days[date.getDay()]}, ${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
 };
 
-// Helper Converter Jam -> Siklus Indonesia (PAGI, SIANG, SORE, MALAM)
+// Helper Converter Jam 24 Jam -> Siklus Indonesia (PAGI, SIANG, SORE, MALAM)
 const getIndonesianPeriod = (timeStr: string): { time: string; period: string } => {
   if (!timeStr) return { time: '00:00', period: 'PAGI' };
   
-  // Clean string jika ada sisa AM/PM
   const cleanTime = timeStr.replace(/(AM|PM)/i, '').trim();
   const [hrs, mins] = cleanTime.split(':');
   let hours = parseInt(hrs, 10);
   if (isNaN(hours)) hours = 9;
 
-  // Cek siklus jika format awalnya AM/PM
+  // Normalisasi jika input data lama masih AM/PM
   if (timeStr.toUpperCase().includes('PM') && hours < 12) hours += 12;
   if (timeStr.toUpperCase().includes('AM') && hours === 12) hours = 0;
 
@@ -79,10 +78,10 @@ const getIndonesianPeriod = (timeStr: string): { time: string; period: string } 
     period = 'MALAM';
   }
 
-  const displayHours = hours % 12 || 12;
-  const formattedTime = `${String(displayHours).padStart(2, '0')}:${mins || '00'}`;
+  // Format String 24 Jam konsisten HH:mm
+  const formatted24Time = `${String(hours).padStart(2, '0')}:${mins || '00'}`;
 
-  return { time: formattedTime, period };
+  return { time: formatted24Time, period };
 };
 
 // Helper Render Link Clickable
@@ -126,7 +125,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ onNavigateTab }) => {
   const [isAddingCustomCategory, setIsAddingCustomCategory] = useState(false);
   const [customCatInput, setCustomCatInput] = useState('');
 
-  // Form States untuk Add Agenda
+  // Form States untuk Add Agenda (Default 24-jam)
   const [newType, setNewType] = useState<AgendaType>('task');
   const [newTitle, setNewTitle] = useState('');
   const [newDesc, setNewDesc] = useState('');
@@ -140,7 +139,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ onNavigateTab }) => {
   const [calendarViewMonth, setCalendarViewMonth] = useState(today.getMonth());
   const [calendarViewYear, setCalendarViewYear] = useState(today.getFullYear());
 
-  // Master Tasks State
+  // Master Tasks State (Format Waktu 24 Jam)
   const [tasks, setTasks] = useState<ScheduledTask[]>([
     {
       id: 'st-1',
@@ -266,7 +265,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ onNavigateTab }) => {
 
   return (
     <div id="tasks-schedule-root" className="max-w-md mx-auto space-y-4 pt-2 pb-36 font-sans">
-      {/* 1. TOP BAR CLEAN (TANPA TANGGAL REDUNDANT & TOMBOL + MELAYANG ATAS) */}
+      {/* 1. TOP BAR CLEAN */}
       <div className="flex items-center justify-between">
         <button
           type="button"
@@ -372,16 +371,16 @@ export const TasksView: React.FC<TasksViewProps> = ({ onNavigateTab }) => {
         })}
       </div>
 
-      {/* 5. BUTTON (+ TAMBAH AGENDAMU) FULL-WIDTH REVISI */}
+      {/* 5. BUTTON (+ TAMBAH AGENDA BARU) REVISI WARNA ABU-ABU */}
       <button
         type="button"
         onClick={() => setIsAddModalOpen(true)}
-        className="w-full py-3 px-4 rounded-2xl bg-white border border-dashed border-purple-300 text-purple-700 hover:bg-purple-50/50 text-xs font-black transition-all shadow-2xs flex items-center justify-center gap-2 group"
+        className="w-full py-3 px-4 rounded-2xl bg-slate-50 border border-dashed border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-black transition-all shadow-2xs flex items-center justify-center gap-2 group"
       >
-        <div className="w-5 h-5 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+        <div className="w-5 h-5 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center group-hover:scale-110 transition-transform">
           <Plus size={13} className="stroke-[3]" />
         </div>
-        <span>Tambah Agenda Baru</span>
+        <span>+ Tambah Agenda Baru</span>
       </button>
 
       {/* NOTIFIKASI MEMILIH TANGGAL LAIN */}
@@ -399,7 +398,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ onNavigateTab }) => {
         </div>
       )}
 
-      {/* 6. TIMELINE LIST WITH FORMAT (PAGI / SIANG / SORE / MALAM) */}
+      {/* 6. TIMELINE LIST WITH FORMAT 24 JAM & WAKTU DI SISI BADGE */}
       <div className="space-y-4 pt-1">
         {tasksForSelectedDate.length > 0 ? (
           tasksForSelectedDate.map((task) => {
@@ -410,7 +409,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ onNavigateTab }) => {
 
             return (
               <div key={task.id} className="flex items-stretch gap-3">
-                {/* Left Column: Time Axis */}
+                {/* Left Column: Time Axis (Sisi Kiri Garis) */}
                 <div className="w-16 shrink-0 flex flex-col items-end justify-between py-1 text-right">
                   {isEvent ? (
                     <>
@@ -464,31 +463,42 @@ export const TasksView: React.FC<TasksViewProps> = ({ onNavigateTab }) => {
                   }`}
                 >
                   <div className="space-y-1">
+                    {/* BARIS SEBELAH CARD KECIL (TAG + RENTANG WAKTU / DEADLINE) */}
                     <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-2">
                         {isEvent ? (
-                          <span className="px-2 py-0.5 rounded-full bg-blue-600 text-white text-[9px] font-black uppercase tracking-wider flex items-center gap-1">
-                            <CalendarDays size={10} />
-                            <span>EVENT</span>
-                          </span>
+                          <>
+                            <span className="px-2.5 py-0.5 rounded-full bg-blue-600 text-white text-[9px] font-black uppercase tracking-wider flex items-center gap-1">
+                              <CalendarDays size={10} />
+                              <span>EVENT</span>
+                            </span>
+                            <span className="text-xs font-black text-slate-800">
+                              {startInfo.time} - {endInfo.time}
+                            </span>
+                          </>
                         ) : (
-                          <span
-                            className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
-                              task.priority === 'High'
-                                ? 'bg-rose-100 text-rose-700'
-                                : task.priority === 'Medium'
-                                ? 'bg-amber-100 text-amber-800'
-                                : 'bg-emerald-100 text-emerald-800'
-                            }`}
-                          >
-                            {task.category}
-                          </span>
+                          <>
+                            <span
+                              className={`text-[9px] font-black uppercase px-2.5 py-0.5 rounded-full ${
+                                task.priority === 'High'
+                                  ? 'bg-rose-100 text-rose-700'
+                                  : task.priority === 'Medium'
+                                  ? 'bg-amber-100 text-amber-800'
+                                  : 'bg-emerald-100 text-emerald-800'
+                              }`}
+                            >
+                              {task.category}
+                            </span>
+                            <span className="text-xs font-black text-slate-800">
+                              Deadline: {startInfo.time} {startInfo.period}
+                            </span>
+                          </>
                         )}
                       </div>
                     </div>
 
                     <h3
-                      className={`text-sm font-black text-slate-900 leading-snug ${
+                      className={`text-sm font-black text-slate-900 leading-snug pt-0.5 ${
                         !isEvent && task.isCompleted ? 'line-through text-slate-400' : ''
                       }`}
                     >
@@ -507,7 +517,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ onNavigateTab }) => {
                     <button
                       type="button"
                       onClick={() => setSelectedDetailTask(task)}
-                      className="text-[11px] font-black text-grey-600 hover:text-grey-800 transition-colors flex items-center gap-0.5"
+                      className="text-[11px] font-black text-slate-600 hover:text-slate-900 transition-colors flex items-center gap-0.5"
                     >
                       <span>Detail</span>
                       <ChevronRight size={14} />
@@ -781,7 +791,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ onNavigateTab }) => {
         )}
       </AnimatePresence>
 
-      {/* MODAL ADD NEW AGENDA */}
+      {/* MODAL ADD NEW AGENDA (FORMAT TIME 24 JAM) */}
       <AnimatePresence>
         {isAddModalOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
@@ -865,7 +875,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ onNavigateTab }) => {
 
                 <div className="space-y-1">
                   <label className="text-xs font-black text-slate-800 block">
-                    {newType === 'task' ? 'Tanggal & Jam Deadline' : 'Tanggal & Waktu Acara'}
+                    {newType === 'task' ? 'Tanggal & Jam Deadline (24 Jam)' : 'Tanggal & Waktu Acara (24 Jam)'}
                   </label>
                   <div className="space-y-2">
                     <input
@@ -973,7 +983,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ onNavigateTab }) => {
                   className={`w-full py-3.5 rounded-2xl text-white text-xs font-black transition-colors shadow-lg mt-2 ${
                     newType === 'event'
                       ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-200/60'
-                      : 'bg-[#7C5CFC] hover:bg-purple-600 shadow-purple-200/60'
+                      : 'bg-slate-900 hover:bg-slate-800 shadow-slate-200'
                   }`}
                 >
                   {newType === 'task' ? 'Buat Task Baru' : 'Jadwalkan Event'}
