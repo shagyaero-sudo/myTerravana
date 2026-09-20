@@ -14,6 +14,8 @@ import {
   RotateCcw,
   CalendarDays,
   CheckSquare,
+  Pencil,
+  Trash2,
 } from 'lucide-react';
 import { StudentUser } from '../types';
 
@@ -22,8 +24,8 @@ export type AgendaType = 'task' | 'event';
 export interface ScheduledTask {
   id: string;
   type: AgendaType;
-  time: string; // Misal "09:00" (24 Jam)
-  endTime?: string; // Misal "10:30" (24 Jam)
+  time: string; // "09:00" (24 Jam)
+  endTime?: string; // "10:30" (24 Jam)
   title: string;
   description: string;
   category: string;
@@ -65,7 +67,6 @@ const getIndonesianPeriod = (timeStr: string): { time: string; period: string } 
   let hours = parseInt(hrs, 10);
   if (isNaN(hours)) hours = 9;
 
-  // Normalisasi jika input data lama masih AM/PM
   if (timeStr.toUpperCase().includes('PM') && hours < 12) hours += 12;
   if (timeStr.toUpperCase().includes('AM') && hours === 12) hours = 0;
 
@@ -78,7 +79,6 @@ const getIndonesianPeriod = (timeStr: string): { time: string; period: string } 
     period = 'MALAM';
   }
 
-  // Format String 24 Jam konsisten HH:mm
   const formatted24Time = `${String(hours).padStart(2, '0')}:${mins || '00'}`;
 
   return { time: formatted24Time, period };
@@ -122,10 +122,11 @@ export const TasksView: React.FC<TasksViewProps> = ({ onNavigateTab }) => {
   const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedDetailTask, setSelectedDetailTask] = useState<ScheduledTask | null>(null);
+  const [isEditingTask, setIsEditingTask] = useState(false);
   const [isAddingCustomCategory, setIsAddingCustomCategory] = useState(false);
   const [customCatInput, setCustomCatInput] = useState('');
 
-  // Form States untuk Add Agenda (Default 24-jam)
+  // Form States untuk Add/Edit Agenda
   const [newType, setNewType] = useState<AgendaType>('task');
   const [newTitle, setNewTitle] = useState('');
   const [newDesc, setNewDesc] = useState('');
@@ -139,7 +140,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ onNavigateTab }) => {
   const [calendarViewMonth, setCalendarViewMonth] = useState(today.getMonth());
   const [calendarViewYear, setCalendarViewYear] = useState(today.getFullYear());
 
-  // Master Tasks State (Format Waktu 24 Jam)
+  // Master Tasks State
   const [tasks, setTasks] = useState<ScheduledTask[]>([
     {
       id: 'st-1',
@@ -204,6 +205,15 @@ export const TasksView: React.FC<TasksViewProps> = ({ onNavigateTab }) => {
     );
   };
 
+  const handleDeleteCategory = (catToDelete: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (categories.length <= 1) return; // Sisakan min 1
+    const updated = categories.filter((c) => c !== catToDelete);
+    setCategories(updated);
+    if (selectedCategory === catToDelete) setSelectedCategory('All');
+    if (newCategory === catToDelete) setNewCategory(updated[0]);
+  };
+
   const handleAddCustomCategory = () => {
     if (customCatInput.trim() && !categories.includes(customCatInput.trim())) {
       const updated = [...categories, customCatInput.trim()];
@@ -212,6 +222,18 @@ export const TasksView: React.FC<TasksViewProps> = ({ onNavigateTab }) => {
       setCustomCatInput('');
       setIsAddingCustomCategory(false);
     }
+  };
+
+  const handleOpenAddModal = () => {
+    setNewType('task');
+    setNewTitle('');
+    setNewDesc('');
+    setNewDate(selectedDateIso);
+    setNewTime('09:00');
+    setNewEndTime('10:30');
+    setNewCategory(categories[0] || 'Work');
+    setNewPriority('Medium');
+    setIsAddModalOpen(true);
   };
 
   const handleCreateTask = (e: React.FormEvent) => {
@@ -237,6 +259,46 @@ export const TasksView: React.FC<TasksViewProps> = ({ onNavigateTab }) => {
     setNewTitle('');
     setNewDesc('');
     setIsAddModalOpen(false);
+  };
+
+  // Open Edit Mode inside Detail Modal
+  const handleStartEditTask = (task: ScheduledTask) => {
+    setNewType(task.type);
+    setNewTitle(task.title);
+    setNewDesc(task.description);
+    setNewDate(task.dateIso);
+    setNewTime(task.time);
+    setNewEndTime(task.endTime || '10:30');
+    setNewCategory(task.category);
+    setNewPriority(task.priority);
+    setIsEditingTask(true);
+  };
+
+  const handleSaveEditedTask = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedDetailTask || !newTitle.trim()) return;
+
+    const updatedTask: ScheduledTask = {
+      ...selectedDetailTask,
+      type: newType,
+      title: newTitle,
+      description: newDesc,
+      dateIso: newDate,
+      time: newTime,
+      endTime: newType === 'event' ? newEndTime : undefined,
+      category: newCategory,
+      priority: newPriority,
+    };
+
+    setTasks((prev) => prev.map((t) => (t.id === updatedTask.id ? updatedTask : t)));
+    setSelectedDetailTask(updatedTask);
+    setIsEditingTask(false);
+  };
+
+  const handleDeleteTask = (taskId: string) => {
+    setTasks((prev) => prev.filter((t) => t.id !== taskId));
+    setSelectedDetailTask(null);
+    setIsEditingTask(false);
   };
 
   const tasksForSelectedDate = useMemo(() => {
@@ -338,7 +400,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ onNavigateTab }) => {
         </div>
       </div>
 
-      {/* 4. CATEGORY FILTERS */}
+      {/* 4. CATEGORY FILTERS DENGAN OPTION HAPUS KATEGORI */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
         <button
           type="button"
@@ -355,26 +417,37 @@ export const TasksView: React.FC<TasksViewProps> = ({ onNavigateTab }) => {
         {categories.map((cat) => {
           const isActive = selectedCategory === cat;
           return (
-            <button
+            <div
               key={cat}
-              type="button"
               onClick={() => setSelectedCategory(cat)}
-              className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
                 isActive
                   ? 'bg-[#1E1B26] text-white shadow-xs'
                   : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
               }`}
             >
-              {cat}
-            </button>
+              <span>{cat}</span>
+              {categories.length > 1 && (
+                <button
+                  type="button"
+                  onClick={(e) => handleDeleteCategory(cat, e)}
+                  className={`p-0.5 rounded-full hover:bg-rose-500/20 transition-colors ${
+                    isActive ? 'text-slate-300 hover:text-white' : 'text-slate-400 hover:text-rose-600'
+                  }`}
+                  title="Hapus Kategori Ini"
+                >
+                  <X size={11} />
+                </button>
+              )}
+            </div>
           );
         })}
       </div>
 
-      {/* 5. BUTTON (+ TAMBAH AGENDA BARU) REVISI WARNA ABU-ABU */}
+      {/* 5. BUTTON (+ TAMBAH AGENDA BARU) ABU-ABU */}
       <button
         type="button"
-        onClick={() => setIsAddModalOpen(true)}
+        onClick={handleOpenAddModal}
         className="w-full py-3 px-4 rounded-2xl bg-slate-50 border border-dashed border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-black transition-all shadow-2xs flex items-center justify-center gap-2 group"
       >
         <div className="w-5 h-5 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -398,7 +471,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ onNavigateTab }) => {
         </div>
       )}
 
-      {/* 6. TIMELINE LIST WITH FORMAT 24 JAM & WAKTU DI SISI BADGE */}
+      {/* 6. TIMELINE LIST */}
       <div className="space-y-4 pt-1">
         {tasksForSelectedDate.length > 0 ? (
           tasksForSelectedDate.map((task) => {
@@ -409,11 +482,10 @@ export const TasksView: React.FC<TasksViewProps> = ({ onNavigateTab }) => {
 
             return (
               <div key={task.id} className="flex items-stretch gap-3">
-                {/* Left Column: Time Axis (Sisi Kiri Garis) */}
+                {/* Left Column: Time Axis */}
                 <div className="w-16 shrink-0 flex flex-col items-end justify-between py-1 text-right">
                   {isEvent ? (
                     <>
-                      {/* JAM MULAI (ATAS GARIS) */}
                       <div>
                         <span className="text-xs font-black text-slate-900 block leading-none">
                           {startInfo.time}
@@ -423,10 +495,8 @@ export const TasksView: React.FC<TasksViewProps> = ({ onNavigateTab }) => {
                         </span>
                       </div>
 
-                      {/* GARIS VERTIKAL PENHUBUNG */}
                       <div className="w-0.5 flex-1 bg-slate-200 my-1 rounded-full self-end mr-2" />
 
-                      {/* JAM SELESAI (BAWAH GARIS) */}
                       <div>
                         <span className="text-xs font-black text-slate-900 block leading-none">
                           {endInfo.time}
@@ -438,10 +508,8 @@ export const TasksView: React.FC<TasksViewProps> = ({ onNavigateTab }) => {
                     </>
                   ) : (
                     <>
-                      {/* GARIS DI ATAS UNTUK DEADLINE TASK */}
                       <div className="w-0.5 flex-1 bg-slate-200 mb-1 rounded-full self-end mr-2" />
 
-                      {/* JAM DEADLINE (DI BAWAH GARIS VERTIKAL) */}
                       <div>
                         <span className="text-xs font-black text-rose-600 block leading-none">
                           {startInfo.time}
@@ -463,7 +531,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ onNavigateTab }) => {
                   }`}
                 >
                   <div className="space-y-1">
-                    {/* BARIS SEBELAH CARD KECIL (TAG + RENTANG WAKTU / DEADLINE) */}
+                    {/* BARIS TAG & JAM SUBTLE ABU-ABU REVISI 1 */}
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
                         {isEvent ? (
@@ -472,7 +540,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ onNavigateTab }) => {
                               <CalendarDays size={10} />
                               <span>EVENT</span>
                             </span>
-                            <span className="text-xs font-black text-slate-800">
+                            <span className="text-xs font-semibold text-slate-500">
                               {startInfo.time} - {endInfo.time}
                             </span>
                           </>
@@ -489,7 +557,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ onNavigateTab }) => {
                             >
                               {task.category}
                             </span>
-                            <span className="text-xs font-black text-slate-800">
+                            <span className="text-xs font-semibold text-slate-500">
                               Deadline: {startInfo.time} {startInfo.period}
                             </span>
                           </>
@@ -516,7 +584,10 @@ export const TasksView: React.FC<TasksViewProps> = ({ onNavigateTab }) => {
                   <div className="pt-2 border-t border-slate-100/80 flex items-center justify-between">
                     <button
                       type="button"
-                      onClick={() => setSelectedDetailTask(task)}
+                      onClick={() => {
+                        setSelectedDetailTask(task);
+                        setIsEditingTask(false);
+                      }}
                       className="text-[11px] font-black text-slate-600 hover:text-slate-900 transition-colors flex items-center gap-0.5"
                     >
                       <span>Detail</span>
@@ -684,7 +755,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ onNavigateTab }) => {
         )}
       </AnimatePresence>
 
-      {/* MODAL DETAIL TASK */}
+      {/* MODAL DETAIL TASK (DISERTAI EDIT KARTU DAN IKON PENSIL & TRASH REVISI 2) */}
       <AnimatePresence>
         {selectedDetailTask && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
@@ -692,7 +763,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ onNavigateTab }) => {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-md bg-white rounded-[36px] p-6 shadow-2xl border border-slate-100 space-y-4"
+              className="w-full max-w-md bg-white rounded-[36px] p-6 shadow-2xl border border-slate-100 space-y-4 max-h-[90vh] overflow-y-auto"
             >
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div className="flex items-center gap-2">
@@ -703,50 +774,169 @@ export const TasksView: React.FC<TasksViewProps> = ({ onNavigateTab }) => {
                         : 'bg-purple-100 text-purple-800'
                     }`}
                   >
-                    {selectedDetailTask.type === 'event' ? '📅 EVENT / JADWAL' : selectedDetailTask.category}
+                    {selectedDetailTask.type === 'event' ? '📅 EVENT' : selectedDetailTask.category}
                   </span>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => setSelectedDetailTask(null)}
-                  className="p-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500"
-                >
-                  <X size={16} />
-                </button>
-              </div>
+                <div className="flex items-center gap-2">
+                  {!isEditingTask && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => handleStartEditTask(selectedDetailTask)}
+                        className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-colors"
+                        title="Edit Agenda Ini"
+                      >
+                        <Pencil size={15} />
+                      </button>
 
-              <div className="space-y-2">
-                <h3 className="text-lg font-black text-slate-900">
-                  {selectedDetailTask.title}
-                </h3>
-                <div className="flex items-center gap-2 text-xs font-bold text-slate-400">
-                  <Clock size={13} />
-                  <span>
-                    {selectedDetailTask.dateIso} • {selectedDetailTask.time}
-                    {selectedDetailTask.endTime ? ` - ${selectedDetailTask.endTime}` : ''}
-                  </span>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteTask(selectedDetailTask.id)}
+                        className="w-8 h-8 rounded-full bg-rose-50 hover:bg-rose-100 text-rose-600 flex items-center justify-center transition-colors"
+                        title="Hapus Agenda Ini"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedDetailTask(null);
+                      setIsEditingTask(false);
+                    }}
+                    className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center"
+                  >
+                    <X size={16} />
+                  </button>
                 </div>
               </div>
 
-              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-xs font-medium text-slate-700 leading-relaxed space-y-2">
-                <span className="text-[10px] font-black uppercase text-slate-400 block">
-                  Deskripsi & Link
-                </span>
-                <p className="whitespace-pre-line">
-                  {selectedDetailTask.description
-                    ? renderTextWithLinks(selectedDetailTask.description)
-                    : 'Tidak ada deskripsi tambahan.'}
-                </p>
-              </div>
+              {!isEditingTask ? (
+                /* MODE TAMPILAN DETAIL */
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-black text-slate-900">
+                      {selectedDetailTask.title}
+                    </h3>
+                    <div className="flex items-center gap-2 text-xs font-bold text-slate-400">
+                      <Clock size={13} />
+                      <span>
+                        {selectedDetailTask.dateIso} • {selectedDetailTask.time}
+                        {selectedDetailTask.endTime ? ` - ${selectedDetailTask.endTime}` : ''}
+                      </span>
+                    </div>
+                  </div>
 
-              <button
-                type="button"
-                onClick={() => setSelectedDetailTask(null)}
-                className="w-full py-3 rounded-2xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-colors"
-              >
-                Tutup Detail
-              </button>
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-xs font-medium text-slate-700 leading-relaxed space-y-2">
+                    <span className="text-[10px] font-black uppercase text-slate-400 block">
+                      Deskripsi & Link
+                    </span>
+                    <p className="whitespace-pre-line">
+                      {selectedDetailTask.description
+                        ? renderTextWithLinks(selectedDetailTask.description)
+                        : 'Tidak ada deskripsi tambahan.'}
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setSelectedDetailTask(null)}
+                    className="w-full py-3 rounded-2xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-colors"
+                  >
+                    Tutup
+                  </button>
+                </div>
+              ) : (
+                /* MODE EDIT KARTU AGENDA */
+                <form onSubmit={handleSaveEditedTask} className="space-y-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-black text-slate-800 block">
+                      Judul Agenda
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={newTitle}
+                      onChange={(e) => setNewTitle(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-black text-slate-800 block">
+                      Deskripsi & Link
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={newDesc}
+                      onChange={(e) => setNewDesc(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-medium text-slate-900 focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-black text-slate-800 block">
+                      Tanggal & Jam
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <input
+                        type="date"
+                        value={newDate}
+                        onChange={(e) => setNewDate(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none"
+                      />
+                      <input
+                        type="time"
+                        value={newTime}
+                        onChange={(e) => setNewTime(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* CUSTOM PILLS SELECTOR UNTUK KATEGORI (BUKAN SYSTEM SELECT) */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-black text-slate-800 block">
+                      Pilih Kategori
+                    </label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {categories.map((c) => (
+                        <button
+                          key={c}
+                          type="button"
+                          onClick={() => setNewCategory(c)}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                            newCategory === c
+                              ? 'bg-slate-900 text-white shadow-xs'
+                              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                          }`}
+                        >
+                          {c}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsEditingTask(false)}
+                      className="flex-1 py-3 rounded-2xl bg-slate-100 text-slate-700 text-xs font-bold hover:bg-slate-200 transition-colors"
+                    >
+                      Batal
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex-1 py-3 rounded-2xl bg-purple-600 text-white text-xs font-bold hover:bg-purple-700 transition-colors shadow-md shadow-purple-200"
+                    >
+                      Simpan Perubahan
+                    </button>
+                  </div>
+                </form>
+              )}
             </motion.div>
           </div>
         )}
@@ -791,7 +981,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ onNavigateTab }) => {
         )}
       </AnimatePresence>
 
-      {/* MODAL ADD NEW AGENDA (FORMAT TIME 24 JAM) */}
+      {/* MODAL ADD NEW AGENDA (MENGGUNAKAN CUSTOM PILLS SELECTOR & FITUR HAPUS KATEGORI REVISI 3) */}
       <AnimatePresence>
         {isAddModalOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
@@ -952,10 +1142,11 @@ export const TasksView: React.FC<TasksViewProps> = ({ onNavigateTab }) => {
                   </div>
                 )}
 
-                <div className="space-y-1">
+                {/* CUSTOM KATEGORI SELECTOR DENGAN PILIHAN OPSI HAPUS */}
+                <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-black text-slate-800 block">
-                      Kategori
+                      Kategori Agenda
                     </label>
                     <button
                       type="button"
@@ -965,17 +1156,37 @@ export const TasksView: React.FC<TasksViewProps> = ({ onNavigateTab }) => {
                       + Tambah Kategori
                     </button>
                   </div>
-                  <select
-                    value={newCategory}
-                    onChange={(e) => setNewCategory(e.target.value)}
-                    className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none"
-                  >
-                    {categories.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
+
+                  <div className="flex flex-wrap gap-2 p-2.5 rounded-2xl bg-slate-50 border border-slate-200">
+                    {categories.map((c) => {
+                      const isSelected = newCategory === c;
+                      return (
+                        <div
+                          key={c}
+                          onClick={() => setNewCategory(c)}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                            isSelected
+                              ? 'bg-slate-900 text-white shadow-xs'
+                              : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          <span>{c}</span>
+                          {categories.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={(e) => handleDeleteCategory(c, e)}
+                              className={`p-0.5 rounded-full hover:bg-rose-500/20 transition-colors ${
+                                isSelected ? 'text-slate-300 hover:text-white' : 'text-slate-400 hover:text-rose-600'
+                              }`}
+                              title="Hapus Kategori"
+                            >
+                              <X size={11} />
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 <button
