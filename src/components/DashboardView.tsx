@@ -79,7 +79,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const [selectedDay, setSelectedDay] = useState<'Senin' | 'Selasa' | 'Rabu' | 'Kamis' | 'Jumat'>('Senin');
 
   const kpiPercentage = Math.round((masteredCount / totalStudents) * 100);
-  const topMasteredStudents = students.filter((s) => s.mastered).slice(0, 4);
 
   const days: ('Senin' | 'Selasa' | 'Rabu' | 'Kamis' | 'Jumat')[] = [
     'Senin',
@@ -143,7 +142,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   const currentDayClasses = masterSchedules.filter((item) => item.day === selectedDay);
 
-  // Custom Icon TikTok (Ter-render Presisi)
+  // Custom Icon TikTok
   const TikTokIcon = () => (
     <svg className="w-4 h-4 fill-current text-slate-900" viewBox="0 0 24 24">
       <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 1 1-2.89-2.89c.28 0 .54.04.79.1V9.4a6.32 6.32 0 1 0 5.55 6.27V8.69a8.18 8.18 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.00-0.12z" />
@@ -152,7 +151,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   return (
     <div id="dashboard-view-root" className="max-w-2xl mx-auto space-y-5 pt-2 pb-36 font-sans">
-      {/* 1. TOP BAR: PROFILE AVATAR (DENGAN IKON PENSIL) & REAL-TIME DATE */}
+      {/* 1. TOP BAR: PROFILE AVATAR (TANPA CORNER OUTLINE + IKON PENSIL BULATAN SANTAI) & REAL-TIME DATE */}
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-3">
           <button
@@ -164,13 +163,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <img
               src={currentUser.avatar}
               alt={currentUser.name}
-              className="w-11 h-11 rounded-full object-cover ring-2 ring-rose-200 group-hover:ring-rose-400 transition-all shadow-xs"
+              className="w-11 h-11 rounded-full object-cover shadow-2xs group-hover:opacity-90 transition-opacity"
             />
-            {/* IKON PENSIL MURNI TANPA PADDING / OUTLINE LINGKARAN */}
-            <Pencil
-              size={12}
-              className="absolute -bottom-0.5 -right-0.5 text-slate-700 drop-shadow-xs"
-            />
+            {/* BULATAN KECIL IKON PENSIL DENGAN PADDING/CONTAINER RAPI */}
+            <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-white border border-slate-100 shadow-xs flex items-center justify-center text-slate-700 group-hover:scale-110 transition-transform">
+              <Pencil size={10} className="stroke-[2.5]" />
+            </div>
           </button>
 
           <div>
@@ -179,12 +177,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
             <h1
               onClick={onToggleOfficerMode}
-              className="text-lg font-black tracking-tight text-slate-900 cursor-pointer hover:text-rose-600 transition-colors flex items-center gap-1.5 mt-0.5"
+              className="text-lg font-black tracking-tight text-slate-900 cursor-pointer hover:text-[#DB0000] transition-colors flex items-center gap-1.5 mt-0.5"
               title={currentUser.is_officer ? 'Mode BPH Aktif (Klik untuk matikan)' : 'Klik untuk masuk mode BPH'}
             >
               <span>Halo, {currentUser.nickname}! 👋</span>
               {currentUser.is_officer && (
-                <ShieldCheck size={16} className="text-rose-600 inline-block" />
+                <ShieldCheck size={16} className="text-[#DB0000] inline-block" />
               )}
             </h1>
           </div>
@@ -197,35 +195,35 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         )}
       </div>
 
-      {/* 2. PROGRESS CHALLENGE TERRAQUIZ (KARTU MERAH TERRAVANA) */}
+      {/* 2. PROGRESS CHALLENGE TERRAQUIZ (MERAH TERRAVANA #DB0000 -> #860400 & TANPA AVATAR STACK) */}
       <div
         onClick={() => onNavigateTab('terraquiz')}
-        className="relative bg-gradient-to-r from-[#D32F2F] via-[#C2185B] to-[#7B1FA2] rounded-[32px] p-5 text-white shadow-xl shadow-rose-200/50 overflow-hidden cursor-pointer group transition-all hover:scale-[1.005]"
+        className="relative bg-gradient-to-r from-[#DB0000] to-[#860400] rounded-[32px] p-5 text-white shadow-xl shadow-red-900/20 overflow-hidden cursor-pointer group transition-all hover:scale-[1.005]"
       >
-        {/* Soft Clay Red Gem SVG */}
+        {/* Soft Clay Clay Sphere SVG Accent */}
         <motion.div
           animate={{
             y: [0, -8, 0],
             rotate: [0, 5, 0],
           }}
           transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute -right-6 -bottom-6 w-32 h-32 pointer-events-none opacity-80"
+          className="absolute -right-6 -bottom-6 w-32 h-32 pointer-events-none opacity-40"
         >
           <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
             <defs>
-              <radialGradient id="clayRed" cx="35%" cy="35%" r="65%">
-                <stop offset="0%" stopColor="#FF8A80" />
-                <stop offset="50%" stopColor="#FF1744" />
-                <stop offset="100%" stopColor="#880E4F" />
+              <radialGradient id="clayRedGradient" cx="35%" cy="35%" r="65%">
+                <stop offset="0%" stopColor="#FF6B6B" />
+                <stop offset="60%" stopColor="#DB0000" />
+                <stop offset="100%" stopColor="#570300" />
               </radialGradient>
             </defs>
-            <circle cx="100" cy="100" r="80" fill="url(#clayRed)" />
+            <circle cx="100" cy="100" r="80" fill="url(#clayRedGradient)" />
           </svg>
         </motion.div>
 
         <div className="relative z-10 flex items-center justify-between gap-3">
-          <div className="space-y-2.5 max-w-[70%] sm:max-w-[75%]">
-            <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/20 text-[9px] font-extrabold uppercase tracking-wider text-rose-100 backdrop-blur-md">
+          <div className="space-y-3 max-w-[70%] sm:max-w-[75%]">
+            <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/20 text-[9px] font-extrabold uppercase tracking-wider text-red-100 backdrop-blur-md">
               <Sparkles size={10} />
               <span>TERRAQUIZ CHALLENGE</span>
             </div>
@@ -234,59 +232,23 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <h3 className="text-xl sm:text-2xl font-black tracking-tight leading-tight">
                 Hafalan Terravana
               </h3>
-              <p className="text-[11px] font-semibold text-rose-100/90 mt-0.5">
+              <p className="text-[11px] font-semibold text-red-100/90 mt-0.5">
                 {masteredCount} dari {totalStudents} Mahasiswa Telah Dikuasai
               </p>
             </div>
 
-            <div className="flex items-center gap-2 pt-0.5">
-              <div className="flex -space-x-2 overflow-hidden shrink-0">
-                {topMasteredStudents.length > 0
-                  ? topMasteredStudents.map((st) => (
-                      <img
-                        key={st.id}
-                        src={st.avatar}
-                        alt={st.name}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onSelectStudent(st);
-                        }}
-                        className="inline-block h-7 w-7 rounded-full ring-2 ring-[#D32F2F] object-cover hover:scale-110 transition-transform"
-                      />
-                    ))
-                  : students.slice(0, 4).map((st) => (
-                      <img
-                        key={st.id}
-                        src={st.avatar}
-                        alt={st.name}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onSelectStudent(st);
-                        }}
-                        className="inline-block h-7 w-7 rounded-full ring-2 ring-[#D32F2F] object-cover hover:scale-110 transition-transform"
-                      />
-                    ))}
-                <div
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onNavigateTab('terrafinder');
-                  }}
-                  className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-[9px] font-black text-white ring-2 ring-[#D32F2F] hover:bg-slate-800"
-                >
-                  +{totalStudents - 4}
-                </div>
-              </div>
-
+            {/* ACTION BUTTON CLEAN (TANPA TUMPUSAN AVATAR +166) */}
+            <div className="pt-0.5">
               <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   onNavigateTab('terraquiz');
                 }}
-                className="px-3 py-1.5 rounded-xl bg-white text-slate-900 text-[11px] font-black hover:bg-slate-100 transition-all shadow-xs flex items-center gap-1 group-hover:translate-x-0.5 shrink-0"
+                className="px-4 py-2 rounded-xl bg-white text-slate-900 text-xs font-black hover:bg-slate-100 transition-all shadow-md flex items-center gap-1 group-hover:translate-x-0.5 shrink-0"
               >
                 <span>Mainkan Kuis</span>
-                <ChevronRight size={12} />
+                <ChevronRight size={13} />
               </button>
             </div>
           </div>
@@ -294,7 +256,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <div className="shrink-0 flex items-center justify-center">
             <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white/15 border border-white/30 flex flex-col items-center justify-center backdrop-blur-md shadow-inner">
               <span className="text-base sm:text-lg font-black leading-none">{kpiPercentage}%</span>
-              <span className="text-[8px] font-extrabold uppercase tracking-widest text-rose-200 mt-0.5">
+              <span className="text-[8px] font-extrabold uppercase tracking-widest text-red-200 mt-0.5">
                 KPI
               </span>
             </div>
@@ -497,7 +459,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </div>
             </div>
 
-            {/* KARTU PINK PASTEL (MEDSOS FIX IKON TIKTOK) */}
+            {/* KARTU PINK PASTEL (MEDSOS) */}
             <div className="bg-[#F5C7F7] rounded-[32px] p-4 text-slate-900 shadow-lg shadow-pink-100/50 flex items-center justify-between gap-3">
               <div>
                 <span className="text-xs font-black block">Follow us</span>
