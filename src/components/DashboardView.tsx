@@ -176,12 +176,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
             <h1
               onClick={onToggleOfficerMode}
-              className="text-lg font-black tracking-tight text-slate-900 cursor-pointer hover:text-[#DB0000] transition-colors flex items-center gap-1.5 mt-0.5"
+              className="text-lg font-black tracking-tight text-slate-900 cursor-pointer hover:text-[#E54848] transition-colors flex items-center gap-1.5 mt-0.5"
               title={currentUser.is_officer ? 'Mode BPH Aktif (Klik untuk matikan)' : 'Klik untuk masuk mode BPH'}
             >
               <span>Halo, {currentUser.nickname}! 👋</span>
               {currentUser.is_officer && (
-                <ShieldCheck size={16} className="text-[#DB0000] inline-block" />
+                <ShieldCheck size={16} className="text-[#E54848] inline-block" />
               )}
             </h1>
           </div>
@@ -194,10 +194,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         )}
       </div>
 
-      {/* 2. PROGRESS CHALLENGE TERRAQUIZ (MERAH TERRAVANA #DB0000 -> #860400) */}
+      {/* 2. PROGRESS CHALLENGE TERRAQUIZ (SOFT CORAL PASTEL RED REVISI) */}
       <div
         onClick={() => onNavigateTab('terraquiz')}
-        className="relative bg-gradient-to-r from-[#DB0000] to-[#860400] rounded-[32px] p-5 text-white shadow-xl shadow-red-900/20 overflow-hidden cursor-pointer group transition-all hover:scale-[1.005]"
+        className="relative bg-gradient-to-r from-[#FF8A8A] to-[#E54848] rounded-[32px] p-5 text-slate-900 shadow-lg shadow-red-200/50 overflow-hidden cursor-pointer group transition-all hover:scale-[1.005]"
       >
         <motion.div
           animate={{
@@ -210,9 +210,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <radialGradient id="clayRedGradient" cx="35%" cy="35%" r="65%">
-                <stop offset="0%" stopColor="#FF6B6B" />
-                <stop offset="60%" stopColor="#DB0000" />
-                <stop offset="100%" stopColor="#570300" />
+                <stop offset="0%" stopColor="#FFFFFF" />
+                <stop offset="60%" stopColor="#FF8A8A" />
+                <stop offset="100%" stopColor="#C42A2A" />
               </radialGradient>
             </defs>
             <circle cx="100" cy="100" r="80" fill="url(#clayRedGradient)" />
@@ -221,16 +221,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
         <div className="relative z-10 flex items-center justify-between gap-3">
           <div className="space-y-3 max-w-[70%] sm:max-w-[75%]">
-            <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/20 text-[9px] font-extrabold uppercase tracking-wider text-red-100 backdrop-blur-md">
+            <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/40 text-[9px] font-extrabold uppercase tracking-wider text-[#6B0000] backdrop-blur-md">
               <Sparkles size={10} />
               <span>TERRAQUIZ CHALLENGE</span>
             </div>
 
             <div>
-              <h3 className="text-xl sm:text-2xl font-black tracking-tight leading-tight">
+              <h3 className="text-xl sm:text-2xl font-black tracking-tight leading-tight text-[#4A0000]">
                 Hafalan Terravana
               </h3>
-              <p className="text-[11px] font-semibold text-red-100/90 mt-0.5">
+              <p className="text-[11px] font-bold text-[#6B0000]/80 mt-0.5">
                 {masteredCount} dari {totalStudents} Mahasiswa Telah Dikuasai
               </p>
             </div>
@@ -242,7 +242,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   e.stopPropagation();
                   onNavigateTab('terraquiz');
                 }}
-                className="px-4 py-2 rounded-xl bg-white text-slate-900 text-xs font-black hover:bg-slate-100 transition-all shadow-md flex items-center gap-1 group-hover:translate-x-0.5 shrink-0"
+                className="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-black hover:bg-slate-800 transition-all shadow-md flex items-center gap-1 group-hover:translate-x-0.5 shrink-0"
               >
                 <span>Mainkan Kuis</span>
                 <ChevronRight size={13} />
@@ -251,9 +251,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
 
           <div className="shrink-0 flex items-center justify-center">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white/15 border border-white/30 flex flex-col items-center justify-center backdrop-blur-md shadow-inner">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white/30 border border-white/50 flex flex-col items-center justify-center backdrop-blur-md shadow-inner text-[#4A0000]">
               <span className="text-base sm:text-lg font-black leading-none">{kpiPercentage}%</span>
-              <span className="text-[8px] font-extrabold uppercase tracking-widest text-red-200 mt-0.5">
+              <span className="text-[8px] font-extrabold uppercase tracking-widest text-[#6B0000] mt-0.5">
                 KPI
               </span>
             </div>

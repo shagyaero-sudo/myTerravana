@@ -381,7 +381,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ onNavigateTab }) => {
         <div className="w-5 h-5 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform">
           <Plus size={13} className="stroke-[3]" />
         </div>
-        <span>+ Tambah Agendamu</span>
+        <span>Tambah Agenda Baru</span>
       </button>
 
       {/* NOTIFIKASI MEMILIH TANGGAL LAIN */}
@@ -481,7 +481,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ onNavigateTab }) => {
                                 : 'bg-emerald-100 text-emerald-800'
                             }`}
                           >
-                            ● {task.category}
+                            {task.category}
                           </span>
                         )}
                       </div>
@@ -507,9 +507,9 @@ export const TasksView: React.FC<TasksViewProps> = ({ onNavigateTab }) => {
                     <button
                       type="button"
                       onClick={() => setSelectedDetailTask(task)}
-                      className="text-[11px] font-black text-purple-600 hover:text-purple-800 transition-colors flex items-center gap-0.5"
+                      className="text-[11px] font-black text-grey-600 hover:text-grey-800 transition-colors flex items-center gap-0.5"
                     >
-                      <span>Details</span>
+                      <span>Detail</span>
                       <ChevronRight size={14} />
                     </button>
 
