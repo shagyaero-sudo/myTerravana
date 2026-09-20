@@ -399,12 +399,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
             <div className="relative z-10 pt-2 border-t border-amber-900/10">
               <a
-                href="https://mia.its.ac.id/"
+                href="https://mia.its.ac.id/presensi"
                 target="_blank"
                 rel="noreferrer"
                 className="text-xs font-black text-slate-900 hover:text-amber-950 transition-colors flex items-center justify-between group"
               >
-                <span>Presensi myITS</span>
+                <span>Buka MIA Presensi</span>
                 <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
               </a>
             </div>
