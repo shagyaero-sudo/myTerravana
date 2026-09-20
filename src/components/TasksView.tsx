@@ -21,13 +21,13 @@ export type AgendaType = 'task' | 'event';
 
 export interface ScheduledTask {
   id: string;
-  type: AgendaType; // 'task' (Tugas/Deadline) atau 'event' (Event/Jadwal)
+  type: AgendaType;
   time: string;
   endTime?: string;
   title: string;
   description: string;
   category: string;
-  dateIso: string; // "YYYY-MM-DD"
+  dateIso: string;
   isCompleted: boolean;
   priority: 'Low' | 'Medium' | 'High';
 }
@@ -35,6 +35,7 @@ export interface ScheduledTask {
 interface TasksViewProps {
   currentUser: StudentUser;
   students: StudentUser[];
+  onNavigateTab?: (tabId: string) => void;
 }
 
 // Helper untuk format YYYY-MM-DD
@@ -80,7 +81,7 @@ const renderTextWithLinks = (text: string) => {
   });
 };
 
-export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
+export const TasksView: React.FC<TasksViewProps> = ({ onNavigateTab }) => {
   const today = new Date();
   const todayIso = toIsoString(today);
 
@@ -148,7 +149,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
     },
   ]);
 
-  // Date Strip Generator (Hari Ini Di Paling Kiri)
+  // Date Strip Generator
   const dateStrip = useMemo(() => {
     const list = [];
     const base = new Date();
@@ -221,7 +222,6 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
     setIsAddModalOpen(false);
   };
 
-  // REVISI KRONOLOGI URUTAN JAM OTOMATIS
   const tasksForSelectedDate = useMemo(() => {
     const filtered = tasks.filter((t) => {
       const matchesDate = t.dateIso === selectedDateIso;
@@ -252,11 +252,12 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
     <div id="tasks-schedule-root" className="max-w-md mx-auto space-y-5 pt-2 pb-36 font-sans">
       {/* 1. BAR PALING ATAS */}
       <div className="flex items-center justify-between gap-2">
+        {/* TOMBOL BACK KE DASHBOARD */}
         <button
           type="button"
-          onClick={() => setSelectedDateIso(todayIso)}
+          onClick={() => onNavigateTab && onNavigateTab('home')}
           className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-700 shadow-2xs hover:bg-slate-50 transition-colors"
-          title="Kembali ke Hari Ini"
+          title="Kembali ke Dashboard"
         >
           <ArrowLeft size={18} />
         </button>
@@ -388,7 +389,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
         </div>
       )}
 
-      {/* 5. TIMELINE LIST (TERURUT KRONOLOGIS) */}
+      {/* 5. TIMELINE LIST */}
       <div className="pt-2 space-y-4">
         {tasksForSelectedDate.length > 0 ? (
           tasksForSelectedDate.map((task) => (
@@ -462,9 +463,10 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
                   <button
                     type="button"
                     onClick={() => setSelectedDetailTask(task)}
-                    className="text-[11px] font-black text-purple-600 hover:text-purple-800 transition-colors"
+                    className="text-[11px] font-black text-purple-600 hover:text-purple-800 transition-colors flex items-center gap-0.5"
                   >
-                    Details &gt;
+                    <span>Details</span>
+                    <ChevronRight size={14} />
                   </button>
 
                   {task.type === 'task' && (
@@ -505,11 +507,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
         )}
       </div>
 
-      {/* ========================================================= */}
-      {/* MODALS SECTION */}
-      {/* ========================================================= */}
-
-      {/* MODAL KALENDER UTUH */}
+      {/* MODAL KALENDER */}
       <AnimatePresence>
         {isCalendarModalOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
@@ -631,7 +629,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
         )}
       </AnimatePresence>
 
-      {/* MODAL DETAIL TASK DESKRIPSI */}
+      {/* MODAL DETAIL TASK */}
       <AnimatePresence>
         {selectedDetailTask && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
@@ -699,7 +697,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
         )}
       </AnimatePresence>
 
-      {/* MODAL ADD CUSTOM CATEGORY (HIGHEST LAYER z-[120]) */}
+      {/* MODAL ADD CUSTOM CATEGORY */}
       <AnimatePresence>
         {isAddingCustomCategory && (
           <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md">
@@ -760,7 +758,6 @@ export const TasksView: React.FC<TasksViewProps> = ({ currentUser }) => {
                 <div className="w-5" />
               </div>
 
-              {/* SEGMENTED SWITCH */}
               <div className="bg-slate-100 p-1 rounded-2xl flex items-center gap-1">
                 <button
                   type="button"
