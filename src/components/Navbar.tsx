@@ -33,8 +33,8 @@ export const Navbar: React.FC<NavbarProps> = ({
       aria-label="Bottom Navigation"
       className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-50 pointer-events-auto"
     >
-      {/* ULTRA GLASSMORPHISM CONTAINER (iOS Style) */}
-      <div className="w-[92vw] max-w-lg sm:w-auto flex items-center justify-between sm:justify-center gap-1 sm:gap-2 p-1.5 rounded-full bg-white/65 backdrop-blur-3xl backdrop-saturate-200 border border-white/60 shadow-[0_20px_50px_rgba(0,0,0,0.12),inset_0_1px_1px_rgba(255,255,255,0.9)] px-2.5 sm:px-3">
+      {/* COMPACT ULTRA GLASSMORPHISM CONTAINER (Lebar Asli + 5px) */}
+      <div className="flex items-center gap-1 sm:gap-1.5 p-1.5 rounded-full bg-white/65 backdrop-blur-3xl backdrop-saturate-200 border border-white/60 shadow-[0_16px_36px_rgba(0,0,0,0.12),inset_0_1px_1px_rgba(255,255,255,0.9)] px-3 sm:px-3.5">
         {NAV_ITEMS.map((item) => {
           const isActive = activeTab === item.id;
           const Icon = item.icon;
@@ -44,13 +44,11 @@ export const Navbar: React.FC<NavbarProps> = ({
               key={item.id}
               type="button"
               onClick={() => onSelectTab(item.id)}
-              className={`relative flex-1 sm:flex-initial flex items-center justify-center gap-2 px-3.5 sm:px-5 py-2.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold transition-all duration-300 select-none outline-none ${
-                isActive
-                  ? 'text-slate-900 shadow-2xs'
-                  : 'text-slate-600/80 hover:text-slate-900'
+              className={`relative flex items-center justify-center gap-2 px-3 py-2.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-semibold transition-all duration-300 select-none outline-none ${
+                isActive ? 'text-slate-900' : 'text-slate-600/80 hover:text-slate-900'
               }`}
             >
-              {/* ACTIVE PILL INDICATOR ALA iOS */}
+              {/* ACTIVE PILL INDICATOR */}
               {isActive && (
                 <motion.div
                   layoutId="active-nav-indicator"
@@ -63,7 +61,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 />
               )}
 
-              {/* ICON CONTAINER & BADGE UNMASTERED */}
+              {/* ICON & BADGE */}
               <span className="relative z-10 flex items-center justify-center">
                 <Icon
                   size={20}
@@ -83,7 +81,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   )}
               </span>
 
-              {/* LABEL TEKS (Tampil di Desktop / Layar Sedang ke Atas) */}
+              {/* LABEL TEKS DESKTOP */}
               <span className="relative z-10 whitespace-nowrap tracking-tight font-bold hidden sm:inline-block">
                 {item.label}
               </span>
